@@ -23,9 +23,11 @@ endif
 ifeq ($(ENABLE64BIT), Yes)
 CFLAGS += -m64
 LDFLAGS += -m64
+ASMFLAGS += -DUNIX64
 else
 CFLAGS += -m32
 LDFLAGS += -m32
+ASMFLAGS += -DX86_32
 endif
 include build/platform-$(UNAME).mk
 
