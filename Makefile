@@ -13,13 +13,12 @@ endif
 # Configurations
 ifeq ($(BUILDTYPE), Release)
 CFLAGS += -O3
-ifneq ($(ENABLE64BIT), Yes)
 USE_ASM = Yes
-endif
 else
 CFLAGS = -g
 USE_ASM = No
 endif
+
 ifeq ($(ENABLE64BIT), Yes)
 CFLAGS += -m64
 LDFLAGS += -m64
@@ -29,6 +28,7 @@ CFLAGS += -m32
 LDFLAGS += -m32
 ASMFLAGS += -DX86_32
 endif
+
 include build/platform-$(UNAME).mk
 
 ifeq ($(USE_ASM),Yes)
