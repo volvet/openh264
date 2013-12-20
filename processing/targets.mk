@@ -24,6 +24,11 @@ PROCESSING_CPP_SRCS=\
 
 PROCESSING_OBJS += $(PROCESSING_CPP_SRCS:.cpp=.o)
 ifeq ($(USE_ASM), Yes)
+
+ifeq ($(ENABLE64BIT), Yes)
+PROCESSING_ASM_SRCS=\
+
+else
 PROCESSING_ASM_SRCS=\
 	$(PROCESSING_SRCDIR)/./src/asm/cpuid.asm\
 	$(PROCESSING_SRCDIR)/./src/asm/denoisefilter.asm\
@@ -31,6 +36,8 @@ PROCESSING_ASM_SRCS=\
 	$(PROCESSING_SRCDIR)/./src/asm/intra_pred.asm\
 	$(PROCESSING_SRCDIR)/./src/asm/sad.asm\
 	$(PROCESSING_SRCDIR)/./src/asm/vaa.asm\
+
+endif
 
 PROCESSING_OBJS += $(PROCESSING_ASM_SRCS:.asm=.o)
 endif

@@ -27,6 +27,11 @@ DECODER_CPP_SRCS=\
 
 DECODER_OBJS += $(DECODER_CPP_SRCS:.cpp=.o)
 ifeq ($(USE_ASM), Yes)
+
+ifeq ($(ENABLE64BIT), Yes)
+DECODER_ASM_SRCS=\
+
+else
 DECODER_ASM_SRCS=\
 	$(DECODER_SRCDIR)/./core/asm/block_add.asm\
 	$(DECODER_SRCDIR)/./core/asm/cpuid.asm\
@@ -38,6 +43,8 @@ DECODER_ASM_SRCS=\
 	$(DECODER_SRCDIR)/./core/asm/mc_chroma.asm\
 	$(DECODER_SRCDIR)/./core/asm/mc_luma.asm\
 	$(DECODER_SRCDIR)/./core/asm/memzero.asm\
+
+endif
 
 DECODER_OBJS += $(DECODER_ASM_SRCS:.asm=.o)
 endif

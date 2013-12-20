@@ -37,23 +37,30 @@ ENCODER_CPP_SRCS=\
 
 ENCODER_OBJS += $(ENCODER_CPP_SRCS:.cpp=.o)
 ifeq ($(USE_ASM), Yes)
-ENCODER_ASM_SRCS=\
-	$(ENCODER_SRCDIR)/./core/asm/coeff.asm\
-	$(ENCODER_SRCDIR)/./core/asm/cpuid.asm\
-	$(ENCODER_SRCDIR)/./core/asm/dct.asm\
-	$(ENCODER_SRCDIR)/./core/asm/deblock.asm\
-	$(ENCODER_SRCDIR)/./core/asm/expand_picture.asm\
-	$(ENCODER_SRCDIR)/./core/asm/intra_pred.asm\
-	$(ENCODER_SRCDIR)/./core/asm/intra_pred_util.asm\
-	$(ENCODER_SRCDIR)/./core/asm/mb_copy.asm\
-	$(ENCODER_SRCDIR)/./core/asm/mc_chroma.asm\
-	$(ENCODER_SRCDIR)/./core/asm/mc_luma.asm\
-	$(ENCODER_SRCDIR)/./core/asm/memzero.asm\
-	$(ENCODER_SRCDIR)/./core/asm/quant.asm\
-	$(ENCODER_SRCDIR)/./core/asm/satd_sad.asm\
-	$(ENCODER_SRCDIR)/./core/asm/score.asm\
-	$(ENCODER_SRCDIR)/./core/asm/vaa.asm\
 
+ifeq ($(ENABLE64BIT), Yes)
+ENCODER_ASM_SRCS=\
+	$(ENCODER_SRCDIR)/./core/asm/cpuid.asm\
+
+else
+ENCODER_ASM_SRCS=\
+        $(ENCODER_SRCDIR)/./core/asm/cpuid.asm\
+        $(ENCODER_SRCDIR)/./core/asm/coeff.asm\
+        $(ENCODER_SRCDIR)/./core/asm/dct.asm\
+        $(ENCODER_SRCDIR)/./core/asm/deblock.asm\
+        $(ENCODER_SRCDIR)/./core/asm/expand_picture.asm\
+        $(ENCODER_SRCDIR)/./core/asm/intra_pred.asm\
+        $(ENCODER_SRCDIR)/./core/asm/intra_pred_util.asm\
+        $(ENCODER_SRCDIR)/./core/asm/mb_copy.asm\
+        $(ENCODER_SRCDIR)/./core/asm/mc_chroma.asm\
+        $(ENCODER_SRCDIR)/./core/asm/mc_luma.asm\
+        $(ENCODER_SRCDIR)/./core/asm/memzero.asm\
+        $(ENCODER_SRCDIR)/./core/asm/quant.asm\
+        $(ENCODER_SRCDIR)/./core/asm/satd_sad.asm\
+        $(ENCODER_SRCDIR)/./core/asm/score.asm\
+        $(ENCODER_SRCDIR)/./core/asm/vaa.asm\
+
+endif
 ENCODER_OBJS += $(ENCODER_ASM_SRCS:.asm=.o)
 endif
 
