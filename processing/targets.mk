@@ -25,7 +25,6 @@ PROCESSING_CPP_SRCS=\
 PROCESSING_OBJS += $(PROCESSING_CPP_SRCS:.cpp=.o)
 ifeq ($(USE_ASM), Yes)
 PROCESSING_ASM_SRCS=\
-	$(PROCESSING_SRCDIR)/./src/asm/asm_inc.asm\
 	$(PROCESSING_SRCDIR)/./src/asm/cpuid.asm\
 	$(PROCESSING_SRCDIR)/./src/asm/denoisefilter.asm\
 	$(PROCESSING_SRCDIR)/./src/asm/downsample_bilinear.asm\
@@ -97,8 +96,6 @@ $(PROCESSING_SRCDIR)/./src/vaacalc/vaacalcfuncs.o: $(PROCESSING_SRCDIR)/./src/va
 $(PROCESSING_SRCDIR)/./src/vaacalc/vaacalculation.o: $(PROCESSING_SRCDIR)/./src/vaacalc/vaacalculation.cpp
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(INCLUDES) $(PROCESSING_CFLAGS) $(PROCESSING_INCLUDES) -c -o $(PROCESSING_SRCDIR)/./src/vaacalc/vaacalculation.o $(PROCESSING_SRCDIR)/./src/vaacalc/vaacalculation.cpp
 
-$(PROCESSING_SRCDIR)/./src/asm/asm_inc.o: $(PROCESSING_SRCDIR)/./src/asm/asm_inc.asm
-	$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(PROCESSING_ASMFLAGS) $(PROCESSING_ASM_INCLUDES) -o $(PROCESSING_SRCDIR)/./src/asm/asm_inc.o $(PROCESSING_SRCDIR)/./src/asm/asm_inc.asm
 
 $(PROCESSING_SRCDIR)/./src/asm/cpuid.o: $(PROCESSING_SRCDIR)/./src/asm/cpuid.asm
 	$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(PROCESSING_ASMFLAGS) $(PROCESSING_ASM_INCLUDES) -o $(PROCESSING_SRCDIR)/./src/asm/cpuid.o $(PROCESSING_SRCDIR)/./src/asm/cpuid.asm
