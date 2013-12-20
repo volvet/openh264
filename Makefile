@@ -42,7 +42,8 @@ ASMFLAGS += -DNO_DYNAMIC_VP -DNOPREFIX
 
 #### No user-serviceable parts below this line
 INCLUDES = -Icodec/api/svc  -Icodec/common -Igtest/include
-ASM_INCLUDES = -Iprocessing/src/asm/
+#ASM_INCLUDES = -Iprocessing/src/asm/
+ASM_INCLUDES = -Icodec/common/
 
 COMMON_INCLUDES = \
     -Icodec/decoder/core/inc

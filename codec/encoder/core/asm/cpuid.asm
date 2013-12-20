@@ -39,20 +39,12 @@
 ;*
 ;*************************************************************************/
 
-bits 32
+%include "asm_inc.asm"
 
 ;******************************************************************************************
 ; Macros
 ;******************************************************************************************
 
-%macro WELS_EXTERN 1
-	%ifdef PREFIX
-		global _%1
-		%define %1 _%1
-	%else
-		global %1
-	%endif
-%endmacro
 
 ;******************************************************************************************
 ; Code
@@ -69,13 +61,21 @@ ALIGN 16
 ;   int32_t WelsCPUIdVerify()
 ;******************************************************************************************
 WelsCPUIdVerify:
-    pushfd					; decrease the SP by 4 and load EFLAGS register onto stack, pushfd 32 bit and pushf for 16 bit
-	pushfd					; need push 2 EFLAGS, one for processing and the another one for storing purpose
-    pop     ecx				; get EFLAGS to bit manipulation
-    mov     eax, ecx		; store into ecx followed
-    xor     eax, 00200000h	; get ID flag (bit 21) of EFLAGS to directly indicate cpuid support or not
-	xor		eax, ecx		; get the ID flag bitwise, eax - 0: not support; otherwise: support
-    popfd					; store back EFLAGS and keep unchanged for system
+    ;pushfd				; decrease the SP by 4 and load EFLAGS register onto stack, pushfd 32 bit and pushf for 16 bit
+    ;pushfd				; need push 2 EFLAGS, one for processing and the another one for storing purpose
+    PUSHRFLAGS
+    PUSHRFLAGS
+
+    ;pop     ecx				; get EFLAGS to bit manipulation
+    pop      r1
+    ;mov     eax, ecx		        ; store into ecx followed
+    mov      r0d,  r1d
+    ;xor     eax, 00200000h	        ; get ID flag (bit 21) of EFLAGS to directly indicate cpuid support or not
+    xor      r0d, 00200000h
+    ;xor	    eax, ecx		        ; get the ID flag bitwise, eax - 0: not support; otherwise: support
+    xor      r0d,   r1d
+    ;popfd				; store back EFLAGS and keep unchanged for system
+    POPRFLAGS
     ret
 
 WELS_EXTERN WelsCPUId
@@ -84,14 +84,14 @@ ALIGN 16
 ;   void WelsCPUId( int32_t uiIndex, int32_t *pFeatureA, int32_t *pFeatureB, int32_t *pFeatureC, int32_t *pFeatureD )
 ;****************************************************************************************************
 WelsCPUId:
-	push	ebx
-	push	edi
+    push	ebx
+    push	edi
 
-	mov     eax, [esp+12]	; operating index
+    mov     eax, [esp+12]	; operating index
     cpuid					; cpuid
 
-	; processing various information return
-	mov     edi, [esp+16]
+    ; processing various information return
+    mov     edi, [esp+16]
     mov     [edi], eax
     mov     edi, [esp+20]
     mov     [edi], ebx
@@ -100,9 +100,9 @@ WelsCPUId:
     mov     edi, [esp+28]
     mov     [edi], edx
 
-	pop		edi
+    pop	    edi
     pop     ebx
-	ret
+    ret
 
 WELS_EXTERN WelsCPUSupportAVX
 ; need call after cpuid=1 and eax, ecx flag got then

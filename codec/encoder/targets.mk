@@ -38,7 +38,6 @@ ENCODER_CPP_SRCS=\
 ENCODER_OBJS += $(ENCODER_CPP_SRCS:.cpp=.o)
 ifeq ($(USE_ASM), Yes)
 ENCODER_ASM_SRCS=\
-	$(ENCODER_SRCDIR)/./core/asm/asm_inc.asm\
 	$(ENCODER_SRCDIR)/./core/asm/coeff.asm\
 	$(ENCODER_SRCDIR)/./core/asm/cpuid.asm\
 	$(ENCODER_SRCDIR)/./core/asm/dct.asm\
@@ -158,8 +157,6 @@ $(ENCODER_SRCDIR)/./plus/src/welsCodecTrace.o: $(ENCODER_SRCDIR)/./plus/src/wels
 $(ENCODER_SRCDIR)/./plus/src/welsEncoderExt.o: $(ENCODER_SRCDIR)/./plus/src/welsEncoderExt.cpp
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(INCLUDES) $(ENCODER_CFLAGS) $(ENCODER_INCLUDES) -c -o $(ENCODER_SRCDIR)/./plus/src/welsEncoderExt.o $(ENCODER_SRCDIR)/./plus/src/welsEncoderExt.cpp
 
-$(ENCODER_SRCDIR)/./core/asm/asm_inc.o: $(ENCODER_SRCDIR)/./core/asm/asm_inc.asm
-	$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(ENCODER_ASMFLAGS) $(ENCODER_ASM_INCLUDES) -o $(ENCODER_SRCDIR)/./core/asm/asm_inc.o $(ENCODER_SRCDIR)/./core/asm/asm_inc.asm
 
 $(ENCODER_SRCDIR)/./core/asm/coeff.o: $(ENCODER_SRCDIR)/./core/asm/coeff.asm
 	$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(ENCODER_ASMFLAGS) $(ENCODER_ASM_INCLUDES) -o $(ENCODER_SRCDIR)/./core/asm/coeff.o $(ENCODER_SRCDIR)/./core/asm/coeff.asm
