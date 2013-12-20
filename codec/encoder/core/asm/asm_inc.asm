@@ -93,6 +93,8 @@ BITS 64
 %define r4d eax
 %define r5d r10d
 
+%define  PUSHRFLAGS     pushfq
+
 %elifdef UNIX64 ; Unix x64 ;************************************
 
 BITS 64
@@ -124,6 +126,8 @@ BITS 64
 %define r4d r8d
 %define r5d r9d
 
+%define  PUSHRFLAGS     pushfq
+
 %elifdef X86_32 ; X86_32 ;************************************
 
 BITS 32
@@ -154,6 +158,9 @@ BITS 32
 %define r3d ebx
 %define r4d esi
 %define r5d edi
+
+%define  PUSHRFLAGS     pushfd
+
 %endif
 
 %macro LOAD_PARA 2
