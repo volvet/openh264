@@ -41,9 +41,6 @@
  *
  *
  *************************************************************************/
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 #include "rc.h"
 #include "encoder_context.h"
 #include "utils.h"
@@ -504,7 +501,7 @@ void RcDecideTargetBits (sWelsEncCtx* pEncCtx) {
 }
 
 
-void RcInitGoomParameters (sWelsEncCtx* pEncCtx) {
+void RcInitGomParameters (sWelsEncCtx* pEncCtx) {
   SWelsSvcRc* pWelsSvcRc			= &pEncCtx->pWelsSvcRc[pEncCtx->uiDependencyId];
   SRCSlicing* pSOverRc				= &pWelsSvcRc->pSlicingOverRc[0];
   const int32_t kiSliceNum			= pWelsSvcRc->iSliceNum;
@@ -787,7 +784,7 @@ void  WelsRcPictureInitGom (void* pCtx) {
     RcCalculatePictureQp (pEncCtx);
   }
   RcInitSliceInformation (pEncCtx);
-  RcInitGoomParameters (pEncCtx);
+  RcInitGomParameters (pEncCtx);
 
 }
 

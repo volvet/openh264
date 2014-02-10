@@ -37,40 +37,23 @@
  *
  *************************************************************************************
  */
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
 
 #include "encoder.h"
-#include "extern.h"
-#include "encoder_context.h"
-#include "typedefs.h"
-#include "wels_const.h"
-#include "wels_common_basis.h"
-#include "codec_def.h"
-#include "param_svc.h"
-#include "cpu_core.h"
 #include "cpu.h"
 #include "utils.h"
-#include "svc_enc_frame.h"
 #include "svc_enc_golomb.h"
-#include "svc_enc_slice_segment.h"
 #include "au_set.h"
 #include "picture_handle.h"
-#include "codec_app_def.h"
 #include "svc_base_layer_md.h"
 #include "svc_encode_slice.h"
 #include "decode_mb_aux.h"
 #include "deblocking.h"
-#include "rc.h"
 #include "ref_list_mgr_svc.h"
-#include "md.h"
 #include "ls_defines.h"
-#include "set_mb_syn_cavlc.h"
 #include "crt_util_safe_x.h"	// Safe CRT routines like utils for cross platforms
-#include "array_stack_align.h"
-// for MT, 4/22/2010
+#if defined(MT_ENABLED)
 #include "slice_multi_threading.h"
+#endif//MT_ENABLED
 #if defined(DYNAMIC_SLICE_ASSIGN) || defined(MT_DEBUG)
 #include "measure_time.h"
 #endif//DYNAMIC_SLICE_ASSIGN
@@ -1805,7 +1788,7 @@ void FreeMemorySvc (sWelsEncCtx** ppCtx) {
 
 #ifdef ENABLE_TRACE_FILE
     if (NULL != pCtx->pFileLog) {
-      fclose (pCtx->pFileLog);
+      WelsFclose (pCtx->pFileLog);
       pCtx->pFileLog	= NULL;
     }
     pCtx->uiSizeLog	= 0;
@@ -2101,32 +2084,10 @@ int32_t WelsInitEncoderExt (sWelsEncCtx** ppCtx, SWelsSvcCodingParam* pCodingPar
   if (wlog == WelsLogDefault) {
     str_t fname[MAX_FNAME_LEN] = {0};
 
-#if defined (_MSC_VER)
-#if _MSC_VER>=1500
-    SNPRINTF (fname, MAX_FNAME_LEN, MAX_FNAME_LEN, "%swels_svc_encoder_trace.txt",
-              pCodingParam->sTracePath);		// confirmed_safe_unsafe_usage
-#else
-    SNPRINTF (fname, MAX_FNAME_LEN, "%swels_svc_encoder_trace.txt",
-              pCodingParam->sTracePath);		// confirmed_safe_unsafe_usage
-#endif//_MSC_VER>=1500
-#else
-    //GNUC/
-    SNPRINTF (fname,      MAX_FNAME_LEN,       "%swels_svc_encoder_trace.txt",
-              pCodingParam->sTracePath);		// confirmed_safe_unsafe_usage
-#endif//_MSC_VER
+    WelsSnprintf (fname, MAX_FNAME_LEN, "wels_svc_encoder_trace.txt");
 
 
-#if defined(__GNUC__)
-    pCtx->pFileLog	= FOPEN (fname, "wt+");
-#else//WIN32
-#if defined(_WIN32) && defined(_MSC_VER)
-#if _MSC_VER >= 1500
-    FOPEN (&pCtx->pFileLog, fname, "wt+");
-#else
-    pCtx->pFileLog	= FOPEN (fname, "wt+");
-#endif//_MSC_VER>=1500
-#endif//WIN32 && _MSC_VER
-#endif//__GNUC__
+    pCtx->pFileLog	= WelsFopen (fname, "wt+");
     pCtx->uiSizeLog	= 0;
   }
 #endif//ENABLE_TRACE_FILE
@@ -3165,7 +3126,7 @@ int32_t WelsEncoderEncodeExt (sWelsEncCtx* pCtx, void* pDst, const SSourcePictur
   int8_t iCurTid						= 0;
   bool_t bAvcBased					= false;
 #if defined(ENABLE_PSNR_CALC)
-  real32_t snr_y = .0f, snr_u = .0f, snr_v = .0f;
+  float snr_y = .0f, snr_u = .0f, snr_v = .0f;
 #endif//ENABLE_PSNR_CALC
 
 #if defined(_DEBUG)

@@ -27,7 +27,7 @@ def write_cpp_rule_pattern(f):
     dst = "$(%s_SRCDIR)/%%.o"%(PREFIX)
 
     f.write("%s: %s\n"%(dst, src))
-    f.write('\t$(CXX) $(CFLAGS) $(CXXFLAGS) $(INCLUDES) $(' + PREFIX + '_CFLAGS) $(' + PREFIX + '_INCLUDES) -c $(CXX_O) $<\n')
+    f.write('\t$(QUIET_CXX)$(CXX) $(CFLAGS) $(CXXFLAGS) $(INCLUDES) $(' + PREFIX + '_CFLAGS) $(' + PREFIX + '_INCLUDES) -c $(CXX_O) $<\n')
     f.write("\n")
 
 def write_asm_rule_pattern(f):
@@ -35,7 +35,7 @@ def write_asm_rule_pattern(f):
     dst = "$(%s_SRCDIR)/%%.o"%(PREFIX)
 
     f.write("%s: %s\n"%(dst, src))
-    f.write('\t$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(' + PREFIX + '_ASMFLAGS) $(' + PREFIX + '_ASM_INCLUDES) -o $@ $<\n')
+    f.write('\t$(QUIET_ASM)$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(' + PREFIX + '_ASMFLAGS) $(' + PREFIX + '_ASM_INCLUDES) -o $@ $<\n')
     f.write("\n")
 
 
@@ -47,9 +47,9 @@ def find_sources():
         for file in dir[2]:
             if (len(INCLUDE) == 0 and not file in EXCLUDE) or file in INCLUDE:
                 if os.path.splitext(file)[1] == CPP_SUFFIX:
-                    cpp_files.append(os.path.join(dir[0], file))
+                    cpp_files.append(os.path.join(dir[0].strip('./'), file))
                 if os.path.splitext(file)[1] == '.asm':
-                    asm_files.append(os.path.join(dir[0], file))
+                    asm_files.append(os.path.join(dir[0].strip('./'), file))
     return [cpp_files, asm_files]
 
 
@@ -85,7 +85,6 @@ except:
 
 
 f = open(OUTFILE, "w")
-f.write("%s_PREFIX=%s\n"%(PREFIX, PREFIX))
 f.write("%s_SRCDIR=%s\n"%(PREFIX, args.directory))
 
 f.write("%s_CPP_SRCS=\\\n"%(PREFIX))
@@ -112,15 +111,15 @@ if len(asm) > 0:
 
 if args.library is not None:
     f.write("$(LIBPREFIX)%s.$(LIBSUFFIX): $(%s_OBJS)\n"%(args.library, PREFIX))
-    f.write("\trm -f $(LIBPREFIX)%s.$(LIBSUFFIX)\n"%args.library)
-    f.write("\t$(AR) $(AR_OPTS) $(%s_OBJS)\n"%PREFIX)
+    f.write("\t$(QUIET)rm -f $@\n")
+    f.write("\t$(QUIET_AR)$(AR) $(AR_OPTS) $+\n")
     f.write("\n")
     f.write("libraries: $(LIBPREFIX)%s.$(LIBSUFFIX)\n"%args.library)
     f.write("LIBRARIES += $(LIBPREFIX)%s.$(LIBSUFFIX)\n"%args.library)
 
 if args.binary is not None:
     f.write("%s$(EXEEXT): $(%s_OBJS) $(LIBS) $(%s_LIBS) $(%s_DEPS)\n"%(args.binary, PREFIX, PREFIX, PREFIX))
-    f.write("\t$(CXX) $(CXX_LINK_O)  $(%s_OBJS) $(%s_LDFLAGS) $(%s_LIBS) $(LDFLAGS) $(LIBS)\n\n"%(PREFIX, PREFIX, PREFIX))
+    f.write("\t$(QUIET_CXX)$(CXX) $(CXX_LINK_O) $(%s_OBJS) $(%s_LDFLAGS) $(%s_LIBS) $(LDFLAGS) $(LIBS)\n\n"%(PREFIX, PREFIX, PREFIX))
     f.write("binaries: %s$(EXEEXT)\n"%args.binary)
     f.write("BINARIES += %s$(EXEEXT)\n"%args.binary)
 

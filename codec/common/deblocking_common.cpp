@@ -133,7 +133,6 @@ void_t DeblockChromaLt4_c (uint8_t* pPixCb, uint8_t* pPixCr, int32_t iStrideX, i
 }
 void_t DeblockChromaEq4_c (uint8_t* pPixCb, uint8_t* pPixCr, int32_t iStrideX, int32_t iStrideY, int32_t iAlpha,
                            int32_t iBeta) {
-  int32_t d = 0;
   int32_t p0, p1, q0, q1;
   bool_t bDetaP0Q0, bDetaP1P0, bDetaQ1Q0;
   for (int32_t i = 0; i < 8; i++) {
@@ -184,7 +183,7 @@ void_t DeblockChromaEq4H_c (uint8_t* pPixCb, uint8_t* pPixCr, int32_t iStride, i
 #ifdef X86_ASM
 extern "C" {
   void DeblockLumaLt4H_ssse3 (uint8_t* pPixY, int32_t iStride, int32_t iAlpha, int32_t iBeta, int8_t* pTc) {
-    FORCE_STACK_ALIGN_1D (uint8_t,  uiBuf,   16 * 8, 16);
+    ENFORCE_STACK_ALIGN_1D (uint8_t,  uiBuf,   16 * 8, 16);
 
     DeblockLumaTransposeH2V_sse2 (pPixY - 4, iStride, &uiBuf[0]);
     DeblockLumaLt4V_ssse3 (&uiBuf[4 * 16], 16, iAlpha, iBeta, pTc);
@@ -192,7 +191,7 @@ extern "C" {
   }
 
   void DeblockLumaEq4H_ssse3 (uint8_t* pPixY, int32_t iStride, int32_t iAlpha, int32_t iBeta) {
-    FORCE_STACK_ALIGN_1D (uint8_t,  uiBuf,   16 * 8, 16);
+    ENFORCE_STACK_ALIGN_1D (uint8_t,  uiBuf,   16 * 8, 16);
 
     DeblockLumaTransposeH2V_sse2 (pPixY - 4, iStride, &uiBuf[0]);
     DeblockLumaEq4V_ssse3 (&uiBuf[4 * 16], 16, iAlpha, iBeta);

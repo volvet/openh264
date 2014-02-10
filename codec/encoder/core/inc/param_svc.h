@@ -63,7 +63,7 @@ extern const uint8_t   g_kuiTemporalIdListTable[MAX_TEMPORAL_LEVEL][MAX_GOP_SIZE
 * \param	upper	input upper value
 * \return	2 based scaling factor
 */
-static __inline uint32_t GetLogFactor (real32_t base, real32_t upper) {
+static inline uint32_t GetLogFactor (float base, float upper) {
 const double dLog2factor	= log10 (1.0 * upper / base) / log10 (2.0);
 const double dEpsilon		= 0.0001;
 const double dRound		= floor (dLog2factor + 0.5);
@@ -113,10 +113,6 @@ typedef struct TagWelsSvcCodingParam {
 SDLayerParam	sDependencyLayers[MAX_DEPENDENCY_LAYER];
 
 /* General */
-#ifdef ENABLE_TRACE_FILE
-str_t			sTracePath[MAX_FNAME_LEN];		// log file for wels encoder
-#endif
-
 uint32_t	uiGopSize;			// GOP size (at maximal frame rate: 16)
 uint32_t	uiIntraPeriod;		// intra period (multiple of GOP size as desired)
 int32_t		iNumRefFrame;		// number of reference frame used

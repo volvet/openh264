@@ -59,8 +59,6 @@
 
 #include "typedefs.h"
 
-namespace WelsDec {
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,10 +76,9 @@ typedef      struct timeb      SWelsTime;
 #endif
 
 int32_t   WelsSnprintf (str_t* buffer,  int32_t sizeOfBuffer,  const str_t* format, ...);
-str_t*   WelsStrncpy (str_t* dest, int32_t sizeInBytes, const str_t* src, int32_t count);
-str_t*   WelsStrcat (str_t* dest, int32_t sizeInBytes, str_t* src);
-int32_t   WelsStrnlen (const str_t* str,  int32_t maxlen);
-int32_t   WelsVsprintf (str_t* buffer, int32_t sizeOfBuffer, const str_t* format, va_list argptr);
+str_t*   WelsStrncpy (str_t* dest, int32_t sizeInBytes, const str_t* src);
+str_t*   WelsStrcat (str_t* dest, int32_t sizeInBytes, const str_t* src);
+int32_t   WelsVsnprintf (str_t* buffer, int32_t sizeOfBuffer, const str_t* format, va_list argptr);
 
 WelsFileHandle*        WelsFopen (const str_t* filename,  const str_t* mode);
 int32_t                WelsFclose (WelsFileHandle*   fp);
@@ -92,13 +89,11 @@ int32_t                WelsFflush (WelsFileHandle* fp);
 
 int32_t                WelsGetTimeOfDay (SWelsTime* tp);
 int32_t                WelsStrftime (str_t* buffer, int32_t size, const str_t* format, const SWelsTime* tp);
-uint16_t               WelsGetMillsecond (const SWelsTime* tp);
+uint16_t               WelsGetMillisecond (const SWelsTime* tp);
 
 
 #ifdef __cplusplus
 }
 #endif
-
-} // namespace WelsDec
 
 #endif//WELS_CRT_UTIL_SAFE_CROSS_PLATFORMS_H__

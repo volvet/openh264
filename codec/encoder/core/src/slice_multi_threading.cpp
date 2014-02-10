@@ -428,11 +428,7 @@ int32_t RequestMtResource (sWelsEncCtx** ppCtx, SWelsSvcCodingParam* pCodingPara
     fclose (pSmt->pFSliceDiff);
     pSmt->pFSliceDiff = NULL;
   }
-#ifdef _WIN32
-  pSmt->pFSliceDiff	= fopen (".\\slice_time.txt", "wt+");
-#else
-  pSmt->pFSliceDiff	= fopen ("/tmp/slice_time.txt", "wt+");
-#endif//_WIN32
+  pSmt->pFSliceDiff	= fopen ("slice_time.txt", "wt+");
 #endif//MT_DEBUG
 
 #if defined(ENABLE_TRACE_MT)
@@ -443,7 +439,6 @@ int32_t RequestMtResource (sWelsEncCtx** ppCtx, SWelsSvcCodingParam* pCodingPara
   while (iIdx < iThreadNum) {
 #if defined(__GNUC__) && !defined(_WIN32)	// for posix threading
     str_t name[SEM_NAME_MAX] = {0};
-    int32_t used_len = 0;
     WELS_THREAD_ERROR_CODE err = 0;
 #endif//__GNUC__
     pSmt->pThreadPEncCtx[iIdx].pWelsPEncCtx	= (void*) (*ppCtx);
@@ -457,13 +452,12 @@ int32_t RequestMtResource (sWelsEncCtx** ppCtx, SWelsSvcCodingParam* pCodingPara
     WelsEventInit (&pSmt->pFinUpdateMbListEvent[iIdx]);
 #else
     // length of semaphore name should be system constrained at least on mac 10.7
-    SNPRINTF (name, SEM_NAME_MAX, "ud%d%p", iIdx, (void*) (*ppCtx));
+    WelsSnprintf (name, SEM_NAME_MAX, "ud%d%p", iIdx, (void*) (*ppCtx));
     err = WelsEventOpen (&pSmt->pUpdateMbListEvent[iIdx], name);
 #if defined(ENABLE_TRACE_MT)
     WelsLog ((*ppCtx), WELS_LOG_INFO, "[MT] Open pUpdateMbListEvent%d named(%s) ret%d err%d\n", iIdx, name, err, errno);
 #endif
-    used_len = SNPRINTF (name, SEM_NAME_MAX, "fu%d%p", iIdx, (void*) (*ppCtx));
-    name[used_len] = '\0';
+    WelsSnprintf (name, SEM_NAME_MAX, "fu%d%p", iIdx, (void*) (*ppCtx));
     err = WelsEventOpen (&pSmt->pFinUpdateMbListEvent[iIdx], name);
 #if defined(ENABLE_TRACE_MT)
     WelsLog ((*ppCtx), WELS_LOG_INFO, "[MT] Open pFinUpdateMbListEvent%d named(%s) ret%d err%d\n", iIdx, name, err, errno);
@@ -477,14 +471,12 @@ int32_t RequestMtResource (sWelsEncCtx** ppCtx, SWelsSvcCodingParam* pCodingPara
     WelsEventInit (&pSmt->pFinSliceCodingEvent[iIdx]);
     WelsEventInit (&pSmt->pExitEncodeEvent[iIdx]);
 #else
-    used_len = SNPRINTF (name, SEM_NAME_MAX, "sc%d%p", iIdx, (void*) (*ppCtx));
-    name[used_len] = '\0';
+    WelsSnprintf (name, SEM_NAME_MAX, "sc%d%p", iIdx, (void*) (*ppCtx));
     err = WelsEventOpen (&pSmt->pSliceCodedEvent[iIdx], name);
 #if defined(ENABLE_TRACE_MT)
     WelsLog ((*ppCtx), WELS_LOG_INFO, "[MT] Open pSliceCodedEvent%d named(%s) ret%d err%d\n", iIdx, name, err, errno);
 #endif
-    used_len = SNPRINTF (name, SEM_NAME_MAX, "rc%d%p", iIdx, (void*) (*ppCtx));
-    name[used_len] = '\0';
+    WelsSnprintf (name, SEM_NAME_MAX, "rc%d%p", iIdx, (void*) (*ppCtx));
     err = WelsEventOpen (&pSmt->pReadySliceCodingEvent[iIdx], name);
 #if defined(ENABLE_TRACE_MT)
     WelsLog ((*ppCtx), WELS_LOG_INFO, "[MT] Open pReadySliceCodingEvent%d = 0x%p named(%s) ret%d err%d\n", iIdx,
@@ -577,19 +569,15 @@ void ReleaseMtResource (sWelsEncCtx** ppCtx) {
 #endif//DYNAMIC_SLICE_ASSIGN && TRY_SLICING_BALANCE
 #else
     str_t ename[SEM_NAME_MAX] = {0};
-    int32_t used_len = 0;
     // length of semaphore name should be system constrained at least on mac 10.7
-    SNPRINTF (ename, SEM_NAME_MAX, "sc%d%p", iIdx, (void*) (*ppCtx));
+    WelsSnprintf (ename, SEM_NAME_MAX, "sc%d%p", iIdx, (void*) (*ppCtx));
     WelsEventClose (pSmt->pSliceCodedEvent[iIdx], ename);
-    used_len = SNPRINTF (ename, SEM_NAME_MAX, "rc%d%p", iIdx, (void*) (*ppCtx));
-    ename[used_len] = '\0';
+    WelsSnprintf (ename, SEM_NAME_MAX, "rc%d%p", iIdx, (void*) (*ppCtx));
     WelsEventClose (pSmt->pReadySliceCodingEvent[iIdx], ename);
 #if defined(DYNAMIC_SLICE_ASSIGN) && defined(TRY_SLICING_BALANCE)
-    used_len = SNPRINTF (ename, SEM_NAME_MAX, "ud%d%p", iIdx, (void*) (*ppCtx));
-    ename[used_len] = '\0';
+    WelsSnprintf (ename, SEM_NAME_MAX, "ud%d%p", iIdx, (void*) (*ppCtx));
     WelsEventClose (pSmt->pUpdateMbListEvent[iIdx], ename);
-    used_len = SNPRINTF (ename, SEM_NAME_MAX, "fu%d%p", iIdx, (void*) (*ppCtx));
-    ename[used_len] = '\0';
+    WelsSnprintf (ename, SEM_NAME_MAX, "fu%d%p", iIdx, (void*) (*ppCtx));
     WelsEventClose (pSmt->pFinUpdateMbListEvent[iIdx], ename);
 #endif//DYNAMIC_SLICE_ASSIGN && TRY_SLICING_BALANCE
 #endif//_WIN32
@@ -1232,7 +1220,7 @@ int32_t CreateSliceThreads (sWelsEncCtx* pCtx) {
         dw = SetThreadAffinityMask (pCtx->pSliceThreading->pThreadHandles[iIdx], dwAffinityMask);  //1 << iIdx
         if (dw == 0) {
           str_t str[64] = {0};
-          SNPRINTF (str, 64, "SetThreadAffinityMask iIdx:%d", iIdx);
+          WelsSnprintf (str, 64, "SetThreadAffinityMask iIdx:%d", iIdx);
         }
       }
     }

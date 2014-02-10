@@ -42,65 +42,48 @@
 
 #include <stdlib.h>
 
-#if !(defined(_MSC_VER) || defined(__MINGW32__))
+#include "typedefs.h"
+#ifndef _WIN32
 #include <sys/time.h>
 #else
-#include "typedefs.h"
-//#include <sys/types.h>
+#include <windows.h>
 #include <sys/timeb.h>
 #endif
 #include <time.h>
-#if defined(_WIN32)
-#include <windows.h>
-//#include <mmsystem.h>	// need static lib winmm.lib for link for such windows 95/98 mm timer
-#endif//#if _WIN32
+
+#ifdef __cplusplus
+extern "C" {
+#endif//__cplusplus
 
 /*!
  * \brief	time cost measure utilization
- * \param	void
+ * \param	void_t
  * \return	time elapsed since run (unit: microsecond)
  */
 
-static inline int64_t WelsTime() {
-#if !(defined(_MSC_VER) || defined(__MINGW32__))
-struct timeval tv_date;
+static inline int64_t WelsTime (void_t) {
+#ifndef _WIN32
+  struct timeval tv_date;
 
-gettimeofday (&tv_date, NULL);
-return ((int64_t) tv_date.tv_sec * 1000000 + (int64_t) tv_date.tv_usec);
+  gettimeofday (&tv_date, NULL);
+  return ((int64_t) tv_date.tv_sec * 1000000 + (int64_t) tv_date.tv_usec);
 #else
-#if defined (_WIN32)
-static int64_t iMeasureTimeFreq = 0;
-//	static BOOL_T support_high_resolution_perf_flag = TRUE;
-int64_t iMeasureTimeCur = 0;
-int64_t iResult = 0;
-if (0 == iMeasureTimeFreq) {
-  // Per MSDN minimum supported OS is Windows 2000 Professional/Server above for high-resolution performance counter
-  /*BOOL_T ret = */QueryPerformanceFrequency ((LARGE_INTEGER*)&iMeasureTimeFreq);
-//		if ( !ret )	// the installed hardware can not support a high-resolution performance counter, we have to use others instead for well feature
-//		{
-//			support_high_resolution_perf_flag	= FALSE;
-//		}
-  if (!iMeasureTimeFreq)
-    iMeasureTimeFreq = 1;
+  static int64_t iMtimeFreq = 0;
+  int64_t iMtimeCur = 0;
+  int64_t iResult = 0;
+  if (!iMtimeFreq) {
+    QueryPerformanceFrequency ((LARGE_INTEGER*)&iMtimeFreq);
+    if (!iMtimeFreq)
+      iMtimeFreq = 1;
+  }
+  QueryPerformanceCounter ((LARGE_INTEGER*)&iMtimeCur);
+  iResult = (int64_t) ((double)iMtimeCur * 1e6 / (double)iMtimeFreq + 0.5);
+  return iResult;
+#endif//WIN32
 }
-//	if ( support_high_resolution_perf_flag )
-//	{
-QueryPerformanceCounter ((LARGE_INTEGER*)&iMeasureTimeCur);
-iResult = (int64_t) ((double)iMeasureTimeCur * 1e6 / (double)iMeasureTimeFreq + 0.5);
-//	}
-//	else
-//	{
-//		iResult = timeGetTime() * 1000;	// 10 ms precision
-//	}
-return iResult;
 
-#else
-struct _timeb tb;
-
-_ftime (&tb);
-return ((int64_t)tb.time * (1000) + (int64_t)tb.millitm) * (1000);
-#endif//#if _WIN32
-#endif//!(defined(_MSC_VER) || defined(__MINGW32__))
+#ifdef __cplusplus
 }
+#endif
 
 #endif//WELS_TIME_COST_MEASURE_UTIL_H__
