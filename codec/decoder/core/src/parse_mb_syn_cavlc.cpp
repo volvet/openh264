@@ -44,7 +44,7 @@
 #include "mv_pred.h"
 
 namespace WelsDec {
-
+#define MAX_LEVEL_PREFIX 15
 void GetNeighborAvailMbType (PNeighAvail pNeighAvail, PDqLayer pCurLayer) {
   int32_t iCurSliceIdc, iTopSliceIdc, iLeftTopSliceIdc, iRightTopSliceIdc, iLeftSliceIdc;
   int32_t iCurXy, iTopXy, iLeftXy, iLeftTopXy, iRightTopXy;
@@ -93,7 +93,7 @@ void GetNeighborAvailMbType (PNeighAvail pNeighAvail, PDqLayer pCurLayer) {
   pNeighAvail->iRightTopType = (pNeighAvail->iRightTopAvail ? pCurLayer->pMbType[iRightTopXy] : 0);
 }
 void WelsFillCacheNonZeroCount (PNeighAvail pNeighAvail, uint8_t* pNonZeroCount,
-                                  PDqLayer pCurLayer) { //no matter slice type, intra_pred_constrained_flag
+                                PDqLayer pCurLayer) { //no matter slice type, intra_pred_constrained_flag
   int32_t iCurXy  = pCurLayer->iMbXyIndex;
   int32_t iTopXy  = 0;
   int32_t iLeftXy = 0;
@@ -144,7 +144,7 @@ void WelsFillCacheNonZeroCount (PNeighAvail pNeighAvail, uint8_t* pNonZeroCount,
   }
 }
 void WelsFillCacheConstrain1Intra4x4 (PNeighAvail pNeighAvail, uint8_t* pNonZeroCount, int8_t* pIntraPredMode,
-                                        PDqLayer pCurLayer) { //no matter slice type
+                                      PDqLayer pCurLayer) { //no matter slice type
   int32_t iCurXy  = pCurLayer->iMbXyIndex;
   int32_t iTopXy  = 0;
   int32_t iLeftXy = 0;
@@ -190,7 +190,7 @@ void WelsFillCacheConstrain1Intra4x4 (PNeighAvail pNeighAvail, uint8_t* pNonZero
 }
 
 void WelsFillCacheConstrain0Intra4x4 (PNeighAvail pNeighAvail, uint8_t* pNonZeroCount, int8_t* pIntraPredMode,
-                                        PDqLayer pCurLayer) { //no matter slice type
+                                      PDqLayer pCurLayer) { //no matter slice type
   int32_t iCurXy  = pCurLayer->iMbXyIndex;
   int32_t iTopXy  = 0;
   int32_t iLeftXy = 0;
@@ -236,7 +236,7 @@ void WelsFillCacheConstrain0Intra4x4 (PNeighAvail pNeighAvail, uint8_t* pNonZero
 }
 
 void WelsFillCacheInter (PNeighAvail pNeighAvail, uint8_t* pNonZeroCount,
-                           int16_t iMvArray[LIST_A][30][MV_A], int8_t iRefIdxArray[LIST_A][30], PDqLayer pCurLayer) {
+                         int16_t iMvArray[LIST_A][30][MV_A], int8_t iRefIdxArray[LIST_A][30], PDqLayer pCurLayer) {
   int32_t iCurXy      = pCurLayer->iMbXyIndex;
   int32_t iTopXy      = 0;
   int32_t iLeftXy     = 0;
@@ -477,8 +477,8 @@ void BsStartCavlc (PBitStringAux pBs) {
 }
 void BsEndCavlc (PBitStringAux pBs) {
   pBs->pCurBuf   = pBs->pStartBuf + (pBs->iIndex >> 3);
-  pBs->uiCurBits = ((((pBs->pCurBuf[0] << 8) | pBs->pCurBuf[1]) << 16) | (pBs->pCurBuf[2] << 8) | pBs->pCurBuf[3]) <<
-                   (pBs->iIndex & 0x07);
+  uint32_t uiCache32Bit = (uint32_t)((((pBs->pCurBuf[0] << 8) | pBs->pCurBuf[1]) << 16) | (pBs->pCurBuf[2] << 8) | pBs->pCurBuf[3]);
+  pBs->uiCurBits = uiCache32Bit << (pBs->iIndex & 0x07);
   pBs->pCurBuf  += 4;
   pBs->iLeftBits = -16 + (pBs->iIndex & 0x07);
 }
@@ -548,23 +548,23 @@ static int32_t CavlcGetLevelVal (int32_t iLevel[16], SReadBitsCache* pBitsCache,
   for (; i < uiTotalCoeff; i++) {
     if (pBitsCache->uiRemainBits <= 16)		SHIFT_BUFFER (pBitsCache);
     WELS_GET_PREFIX_BITS (pBitsCache->uiCache32Bit, iPrefixBits);
+    if (iPrefixBits > MAX_LEVEL_PREFIX + 1) //iPrefixBits includes leading "0"s and first "1", should +1
+      return -1;
     POP_BUFFER (pBitsCache, iPrefixBits);
     iUsedBits   += iPrefixBits;
     iLevelPrefix = iPrefixBits - 1;
 
-    iLevelCode = (WELS_MIN (15, iLevelPrefix)) << iSuffixLength; //differ
+    iLevelCode = iLevelPrefix << iSuffixLength; //differ
     iSuffixLengthSize = iSuffixLength;
 
     if (iLevelPrefix >= 14) {
       if (14 == iLevelPrefix && 0 == iSuffixLength)
         iSuffixLengthSize = 4;
-      else if (15 == iLevelPrefix)
+      else if (15 == iLevelPrefix) {
         iSuffixLengthSize = 12;
-      else if (iLevelPrefix > 15)
-        iLevelCode += (1 << (iLevelPrefix - 3)) - 4096;
-
-      if (iLevelPrefix >= 15 && iSuffixLength == 0)
-        iLevelCode += 15;
+        if (iSuffixLength == 0)
+          iLevelCode += 15;
+      }
     }
 
     if (iSuffixLengthSize > 0) {
@@ -677,7 +677,8 @@ int32_t WelsResidualBlockCavlc (SVlcTable* pVlcTable, uint8_t* pNonZeroCountCach
   uint8_t bChroma   = (bChromaDc || CHROMA_AC == iResidualProperty);
   SReadBitsCache sReadBitsCache;
 
-  sReadBitsCache.uiCache32Bit = ((((pBuf[0] << 8) | pBuf[1]) << 16) | (pBuf[2] << 8) | pBuf[3]) << (iCurIdx & 0x07);
+  uint32_t uiCache32Bit = (uint32_t)((((pBuf[0] << 8) | pBuf[1]) << 16) | (pBuf[2] << 8) | pBuf[3]); 
+  sReadBitsCache.uiCache32Bit = uiCache32Bit << (iCurIdx & 0x07);
   sReadBitsCache.uiRemainBits = 32 - (iCurIdx & 0x07);
   sReadBitsCache.pBuf = pBuf;
   //////////////////////////////////////////////////////////////////////////
@@ -984,6 +985,7 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
                         PBitStringAux pBs) {
   PSlice pSlice				= &pCtx->pCurDqLayer->sLayerInfo.sSliceInLayer;
   PSliceHeader pSliceHeader	= &pSlice->sSliceHeaderExt.sSliceHeader;
+  PPicture* ppRefPic = pCtx->sRefPic.pRefList[LIST_0];
   int32_t iNumRefFrames		= pSliceHeader->pSps->iNumRefFrames;
   int32_t iRefCount[2];
   PDqLayer pCurDqLayer = pCtx->pCurDqLayer;
@@ -991,7 +993,8 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
   int32_t iMbXy = pCurDqLayer->iMbXyIndex;
   int32_t iMotionPredFlag[4];
   int16_t iMv[2] = {0};
-
+  int16_t iMinVmv = pSliceHeader->pSps->pSLevelLimits->iMinVmv;
+  int16_t iMaxVmv = pSliceHeader->pSps->pSLevelLimits->iMaxVmv;
   iMotionPredFlag[0] = iMotionPredFlag[1] = iMotionPredFlag[2] = iMotionPredFlag[3] =
                          pSlice->sSliceHeaderExt.bDefaultMotionPredFlag;
   iRefCount[0] = pSliceHeader->uiRefCount[0];
@@ -999,13 +1002,15 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
 
   switch (pCurDqLayer->pMbType[iMbXy]) {
   case MB_TYPE_16x16: {
-    int8_t iRefIdx = 0;
+    int32_t iRefIdx = 0;
     if (pSlice->sSliceHeaderExt.bAdaptiveMotionPredFlag) {
       iMotionPredFlag[0] = BsGetOneBit (pBs);
     }
     if (iMotionPredFlag[0] == 0) {
       iRefIdx = BsGetTe0 (pBs, iRefCount[0]);
-      if (iRefIdx < 0 || iRefIdx >= iNumRefFrames) { //error ref_idx
+      // Security check: iRefIdx should be in range 0 to num_ref_idx_l0_active_minus1, includsive
+      // ref to standard section 7.4.5.1. iRefCount[0] is 1 + num_ref_idx_l0_active_minus1.
+      if ((iRefIdx < 0) || (iRefIdx >= iRefCount[0]) || (ppRefPic[iRefIdx] == NULL)) { //error ref_idx
         return ERR_INFO_INVALID_REF_INDEX;
       }
     } else {
@@ -1016,7 +1021,7 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
 
     iMv[0] += BsGetSe (pBs);
     iMv[1] += BsGetSe (pBs);
-
+    WELS_CHECK_SE_BOTH_WARNING (iMv[1], iMinVmv, iMaxVmv, "vertical mv");
     UpdateP16x16MotionInfo (pCurDqLayer, iRefIdx, iMv);
   }
   break;
@@ -1034,7 +1039,7 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
         return GENERATE_ERROR_NO (ERR_LEVEL_MB_DATA, ERR_INFO_UNSUPPORTED_ILP);
       }
       iRefIdx[i] = BsGetTe0 (pBs, iRefCount[0]);
-      if (iRefIdx[i] < 0 || iRefIdx[i] >= iNumRefFrames) { //error ref_idx
+      if ((iRefIdx[i] < 0) || (iRefIdx[i] >= iRefCount[0]) || (ppRefPic[iRefIdx[i]] == NULL)) { //error ref_idx
         return ERR_INFO_INVALID_REF_INDEX;
       }
     }
@@ -1043,7 +1048,7 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
 
       iMv[0] += BsGetSe (pBs);
       iMv[1] += BsGetSe (pBs);
-
+      WELS_CHECK_SE_BOTH_WARNING (iMv[1], iMinVmv, iMaxVmv, "vertical mv");
       UpdateP16x8MotionInfo (pCurDqLayer, iMvArray, iRefIdxArray, i << 3, iRefIdx[i], iMv);
     }
   }
@@ -1059,7 +1064,7 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
     for (i = 0; i < 2; i++) {
       if (iMotionPredFlag[i] == 0) {
         iRefIdx[i] = BsGetTe0 (pBs, iRefCount[0]);
-        if (iRefIdx[i] < 0 || iRefIdx[i] >= iNumRefFrames) { //error ref_idx
+        if ((iRefIdx[i] < 0) || (iRefIdx[i] >= iRefCount[0]) || (ppRefPic[iRefIdx[i]] == NULL)) { //error ref_idx
           return ERR_INFO_INVALID_REF_INDEX;
         }
       } else {
@@ -1073,14 +1078,14 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
 
       iMv[0] += BsGetSe (pBs);
       iMv[1] += BsGetSe (pBs);
-
+      WELS_CHECK_SE_BOTH_WARNING (iMv[1], iMinVmv, iMaxVmv, "vertical mv");
       UpdateP8x16MotionInfo (pCurDqLayer, iMvArray, iRefIdxArray, i << 2, iRefIdx[i], iMv);
     }
   }
   break;
   case MB_TYPE_8x8:
   case MB_TYPE_8x8_REF0: {
-    int8_t iRefIdx[4] = {0}, iSubPartCount[4], iPartWidth[4];
+    int32_t iRefIdx[4] = {0}, iSubPartCount[4], iPartWidth[4];
     uint32_t uiSubMbType;
 
     if (MB_TYPE_8x8_REF0 == pCurDqLayer->pMbType[iMbXy]) {
@@ -1115,7 +1120,7 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
 
         if (iMotionPredFlag[i] == 0) {
           iRefIdx[i] = BsGetTe0 (pBs, iRefCount[0]);
-          if (iRefIdx[i] < 0 || iRefIdx[i] >= iNumRefFrames) { //error ref_idx
+          if ((iRefIdx[i] < 0) || (iRefIdx[i] >= iRefCount[0]) || (ppRefPic[iRefIdx[i]] == NULL)) { //error ref_idx
             return ERR_INFO_INVALID_REF_INDEX;
           }
 
@@ -1148,7 +1153,7 @@ int32_t ParseInterInfo (PWelsDecoderContext pCtx, int16_t iMvArray[LIST_A][30][M
 
         iMv[0] += BsGetSe (pBs);
         iMv[1] += BsGetSe (pBs);
-
+        WELS_CHECK_SE_BOTH_WARNING (iMv[1], iMinVmv, iMaxVmv, "vertical mv");
         if (SUB_MB_TYPE_8x8 == uiSubMbType) {
           ST32 (pCurDqLayer->pMv[0][iMbXy][uiScan4Idx], LD32 (iMv));
           ST32 (pCurDqLayer->pMv[0][iMbXy][uiScan4Idx + 1], LD32 (iMv));

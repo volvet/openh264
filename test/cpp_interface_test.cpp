@@ -22,12 +22,11 @@ static void* gThis;
  */
 struct SVCEncoderImpl : public ISVCEncoder {
   virtual ~SVCEncoderImpl() {}
-  virtual int EXTAPI Initialize(SVCEncodingParam* pParam,
-      const INIT_TYPE kiInitType) {
+  virtual int EXTAPI Initialize(const SEncParamBase* pParam) {
     EXPECT_TRUE(gThis == this);
     return 1;
   }
-  virtual int EXTAPI Initialize2(void* pParam, const INIT_TYPE kiInitType) {
+  virtual int EXTAPI InitializeExt(const SEncParamExt* pParam) {
     EXPECT_TRUE(gThis == this);
     return 2;
   }
@@ -70,7 +69,7 @@ struct SVCEncoderImpl : public ISVCEncoder {
 
 struct SVCDecoderImpl : public ISVCDecoder {
   virtual ~SVCDecoderImpl() {}
-  virtual long EXTAPI Initialize(void* pParam, const INIT_TYPE iInitType) {
+  virtual long EXTAPI Initialize(const SDecodingParam* pParam) {
     EXPECT_TRUE(gThis == this);
     return 1;
   }

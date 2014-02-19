@@ -350,7 +350,7 @@ void WelsCloseDecoder (PWelsDecoderContext pCtx) {
 /*!
  * \brief	configure decoder parameters
  */
-int32_t DecoderConfigParam (PWelsDecoderContext pCtx, const void* kpParam) {
+int32_t DecoderConfigParam (PWelsDecoderContext pCtx, const SDecodingParam* kpParam) {
   if (NULL == pCtx || NULL == kpParam)
     return 1;
 
@@ -401,12 +401,6 @@ int32_t WelsInitDecoder (PWelsDecoderContext pCtx, void* pTraceHandle, PWelsLogC
 
   // open decoder
   WelsOpenDecoder (pCtx);
-
-  // decode mode setting
-  pCtx->iDecoderMode = SW_MODE;
-  pCtx->iSetMode = AUTO_MODE;
-  pCtx->iDecoderOutputProperty = BUFFER_HOST;
-  pCtx->iModeSwitchType = 0; // 0: do not do mode switch
 
 
   return ERR_NONE;
