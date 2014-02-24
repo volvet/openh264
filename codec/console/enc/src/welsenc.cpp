@@ -416,6 +416,7 @@ void PrintHelp() {
   printf ("  -lqp		(Layer) (base quality layer qp : must work with -ldeltaqp or -lqparr)\n");
   printf ("  -ltarb	    (Layer) (spatial layer target bitrate)\n");
   printf ("  -slcmd   (Layer) (spatial layer slice mode): pls refer to layerX.cfg for details ( -slcnum: set target slice num; -slcsize: set target slice size constraint ) \n");
+  printf ("  -trace   (Level)\n");
   printf ("\n");
 }
 
@@ -468,6 +469,9 @@ int ParseCommandLine (int argc, char** argv, SEncParamExt& pSvcParam, SFilesSet&
 
     else if (!strcmp (pCommand, "-rc") && (n < argc))
       pSvcParam.bEnableRc = atoi (argv[n++]) ? true : false;
+
+    else if (!strcmp (pCommand, "-trace") && (n < argc))
+      WelsStderrSetTraceLevel (atoi (argv[n++]));
 
     else if (!strcmp (pCommand, "-tarb") && (n < argc))
       pSvcParam.iTargetBitrate = atoi (argv[n++]);
@@ -657,8 +661,6 @@ int FillSpecificParameters (SEncParamExt& sParam) {
   sParam.sSpatialLayers[iIndexLayer].iVideoHeight	= 90;
   sParam.sSpatialLayers[iIndexLayer].fFrameRate	= 7.5f;
   sParam.sSpatialLayers[iIndexLayer].iSpatialBitrate		= 64000;
-  sParam.sSpatialLayers[iIndexLayer].iCgsSnrRefined		= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[0]	= 0;
   sParam.sSpatialLayers[iIndexLayer].iInterSpatialLayerPredFlag	= 0;
 #ifdef MT_ENABLED
   sParam.sSpatialLayers[iIndexLayer].sSliceCfg.uiSliceMode = 0;
@@ -669,10 +671,6 @@ int FillSpecificParameters (SEncParamExt& sParam) {
   sParam.sSpatialLayers[iIndexLayer].iVideoHeight	= 180;
   sParam.sSpatialLayers[iIndexLayer].fFrameRate	= 15.0f;
   sParam.sSpatialLayers[iIndexLayer].iSpatialBitrate		= 160000;
-  sParam.sSpatialLayers[iIndexLayer].iCgsSnrRefined		= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[0]	= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[1]	= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[2]	= 0;
   sParam.sSpatialLayers[iIndexLayer].iInterSpatialLayerPredFlag	= 0;
 #ifdef MT_ENABLED
   sParam.sSpatialLayers[iIndexLayer].sSliceCfg.uiSliceMode = 0;
@@ -683,10 +681,6 @@ int FillSpecificParameters (SEncParamExt& sParam) {
   sParam.sSpatialLayers[iIndexLayer].iVideoHeight	= 360;
   sParam.sSpatialLayers[iIndexLayer].fFrameRate	= 30.0f;
   sParam.sSpatialLayers[iIndexLayer].iSpatialBitrate		= 512000;
-  sParam.sSpatialLayers[iIndexLayer].iCgsSnrRefined		= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[0]	= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[1]	= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[2]	= 0;
   sParam.sSpatialLayers[iIndexLayer].iInterSpatialLayerPredFlag	= 0;
 #ifdef MT_ENABLED
   sParam.sSpatialLayers[iIndexLayer].sSliceCfg.uiSliceMode = 0;
@@ -698,10 +692,6 @@ int FillSpecificParameters (SEncParamExt& sParam) {
   sParam.sSpatialLayers[iIndexLayer].iVideoHeight	= 720;
   sParam.sSpatialLayers[iIndexLayer].fFrameRate	= 30.0f;
   sParam.sSpatialLayers[iIndexLayer].iSpatialBitrate		= 1500000;
-  sParam.sSpatialLayers[iIndexLayer].iCgsSnrRefined		= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[0]	= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[1]	= 0;
-//	sParam.sSpatialLayers[iIndexLayer].iQualityBitrate[2]	= 0;
   sParam.sSpatialLayers[iIndexLayer].iInterSpatialLayerPredFlag	= 0;
 #ifdef MT_ENABLED
   sParam.sSpatialLayers[iIndexLayer].sSliceCfg.uiSliceMode = 0;
