@@ -192,6 +192,16 @@ static void FillDefault (SEncParamExt& param, const bool kbEnableRc) {
   param.iMaxQp = 51;
   param.iMinQp = 0;
   param.iUsageType = 0;
+
+  param.sSpatialLayers[0].iDLayerQp = SVC_QUALITY_BASE_QP;
+  param.sSpatialLayers[0].fFrameRate = param.fMaxFrameRate;
+  param.sSpatialLayers[0].sSliceCfg.uiSliceMode = 0;
+  param.sSpatialLayers[0].sSliceCfg.sSliceArgument.uiSliceSizeConstraint = 1500;
+  param.sSpatialLayers[0].sSliceCfg.sSliceArgument.uiSliceNum = 1;
+
+  const int32_t kiLesserSliceNum = ((MAX_SLICES_NUM < MAX_SLICES_NUM_TMP) ? MAX_SLICES_NUM : MAX_SLICES_NUM_TMP);
+  for (int32_t idx = 0; idx < kiLesserSliceNum; idx++)
+    param.sSpatialLayers[0].sSliceCfg.sSliceArgument.uiSliceMbNum[idx] = 960;
 }
 
 void FillDefault (const bool kbEnableRc) {
@@ -266,10 +276,10 @@ int32_t ParamBaseTranscode (const SEncParamBase& pCodingParam, const bool kbEnab
     pDlp->sRecFileName[0]	= '\0';	// file to be constructed
 #endif//ENABLE_FRAME_DUMP
    pDlp->iActualWidth = sSpatialLayers[iIdxSpatial].iVideoWidth = iPicWidth;
-   pDlp->iFrameWidth =  WELS_ALIGN(pDlp->iActualWidth, MB_WIDTH_LUMA);
+   pDlp->iFrameWidth = pDlp->iActualWidth;
 
   pDlp->iActualHeight = sSpatialLayers[iIdxSpatial].iVideoHeight = iPicHeight;
-  pDlp->iFrameHeight =  WELS_ALIGN(pDlp->iActualHeight, MB_HEIGHT_LUMA);
+  pDlp->iFrameHeight = pDlp->iActualHeight;
 
     pDlp->iSpatialBitrate	=
 		sSpatialLayers[iIdxSpatial].iSpatialBitrate = pCodingParam.iTargetBitrate;	// target bitrate for current spatial layer
