@@ -1933,8 +1933,8 @@ int32_t WelsInitEncoderExt (sWelsEncCtx** ppCtx, SWelsSvcCodingParam* pCodingPar
   }
 
   // for cpu features detection, Only detect once??
-#ifdef X86_ASM
   uiCpuFeatureFlags	= WelsCPUFeatureDetect (&uiCpuCores);	// detect cpu capacity features
+#ifdef X86_ASM
   if (uiCpuFeatureFlags & WELS_CPU_CACHELINE_128)
     iCacheLineSize = 128;
   else if (uiCpuFeatureFlags & WELS_CPU_CACHELINE_64)
@@ -3280,7 +3280,7 @@ int32_t WelsEncoderEncodeExt (sWelsEncCtx* pCtx, SFrameBSInfo * pFbi, const SSou
 
             lwait = WelsMultipleEventsWaitSingleBlocking (iNumThreadsScheduled,
                     &pCtx->pSliceThreading->pSliceCodedEvent[0],
-                    2);	// 2 ms for one tick
+                    (uint32_t) -1);
             iEventId = (int32_t) (lwait - WELS_THREAD_ERROR_WAIT_OBJECT_0);
             if (iEventId >= 0 && iEventId < iNumThreadsScheduled) {
               if (iIndexOfSliceToBeCoded < iSliceCount) {
@@ -3293,8 +3293,6 @@ int32_t WelsEncoderEncodeExt (sWelsEncCtx* pCtx, SFrameBSInfo * pFbi, const SSou
               } else {	// no other slices left for coding
                 -- iNumThreadsRunning;
               }
-            } else {
-              WelsSleep (1);
             }
 #else
             // TODO for pthread platforms
