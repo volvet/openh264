@@ -44,7 +44,7 @@ OS Support
 Processor Support
 -----------------
 - Intel x86 optionally with MMX/SSE (no AVX yet, help is welcome)
-- ARMv7 optionally with NEON (initial release does not include this target, will follow later)
+- ARMv7 optionally with NEON
 - Any architecture using C/C++ fallback functions
 
 Building the Library
@@ -66,6 +66,10 @@ You can also set ARCH, NDKLEVEL, GCCVERSION according to your device and NDK ver
 ARCH specifies the architecture of android device. Currently only arm and x86 are supported, the default is arm.
 NDKLEVEL specifies android api level, the api level can be 12-19, the default is 12.
 GCCVERSION specifies which gcc in NDK is used, the default is 4.8.
+
+By default these commands build for the armeabi-v7a ABI. To build for the other android
+ABIs, add "ARCH=mips" or "ARCH=x86". To build for the older armeabi ABI (which has
+armv5te as baseline), add "APP_ABI=armeabi" (ARCH=arm is implicit).
 
 For iOS Builds
 --------------

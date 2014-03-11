@@ -1,6 +1,6 @@
 /*!
  * \copy
- *     Copyright (c)  2009-2013, Cisco Systems
+ *     Copyright (c)  2013, Cisco Systems
  *     All rights reserved.
  *
  *     Redistribution and use in source and binary forms, with or without
@@ -28,62 +28,36 @@
  *     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *     POSSIBILITY OF SUCH DAMAGE.
  *
- * \file	thread.h
- *
- * \brief	Interfaces introduced in thread programming
- *
- * \date	11/17/2009 Created
- *
- *************************************************************************************
  */
 
-#ifndef WELSVP_THREAD_H
-#define WELSVP_THREAD_H
+#ifdef  HAVE_NEON
+.text
+#include "arm_arch_common_macro.S"
 
-#include "typedef.h"
 
-#if defined(_WIN32)
+WELS_ASM_FUNC_BEGIN WelsSetMemZero_neon
+    veor q0, q0
+    cmp r1, #32
+    beq mem_zero_32_neon_start
+    blt mem_zero_24_neon_start
 
-#include <windows.h>
+mem_zero_loop:
+    subs r1, r1, #64
+    vst1.64 {q0}, [r0]!
+    vst1.64 {q0}, [r0]!
+    vst1.64 {q0}, [r0]!
+    vst1.64 {q0}, [r0]!
+    bne mem_zero_loop
+    bx lr
 
-#elif defined(__GNUC__)
+mem_zero_32_neon_start:
+    vst1.64 {q0}, [r0]!
+    vst1.64 {q0}, [r0]!
+    bx lr
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <signal.h>
-#include <errno.h>
-
-#endif//WIN32
-
-WELSVP_NAMESPACE_BEGIN
-
-#if defined(_WIN32)
-
-typedef  HANDLE            WELS_THREAD_HANDLE;
-typedef  CRITICAL_SECTION  WELS_MUTEX;
-
-#elif defined(__GNUC__)
-
-typedef   pthread_t         WELS_THREAD_HANDLE;
-typedef   pthread_mutex_t   WELS_MUTEX;
-
-#endif
-
-typedef int32_t WELS_THREAD_ERROR_CODE;
-
-#define   WELS_THREAD_ERROR_OK					0
-#define   WELS_THREAD_ERROR_GENERAL			((unsigned long)(-1))
-#define   WELS_THREAD_ERROR_WAIT_OBJECT_0		0
-#define	  WELS_THREAD_ERROR_WAIT_TIMEOUT		((unsigned long)0x00000102L)
-#define	  WELS_THREAD_ERROR_WAIT_FAILED		    WELS_THREAD_ERROR_GENERAL
-
-WELS_THREAD_ERROR_CODE   WelsMutexInit (WELS_MUTEX*    mutex);
-WELS_THREAD_ERROR_CODE   WelsMutexLock (WELS_MUTEX*    mutex);
-WELS_THREAD_ERROR_CODE   WelsMutexUnlock (WELS_MUTEX* mutex);
-WELS_THREAD_ERROR_CODE   WelsMutexDestroy (WELS_MUTEX* mutex);
-
-WELSVP_NAMESPACE_END
+mem_zero_24_neon_start:
+    vst1.64 {q0}, [r0]!
+    vst1.64 {d0}, [r0]!
+WELS_ASM_FUNC_END
 
 #endif

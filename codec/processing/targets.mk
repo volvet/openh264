@@ -3,7 +3,6 @@ PROCESSING_CPP_SRCS=\
 	$(PROCESSING_SRCDIR)/src/adaptivequantization/AdaptiveQuantization.cpp\
 	$(PROCESSING_SRCDIR)/src/backgrounddetection/BackgroundDetection.cpp\
 	$(PROCESSING_SRCDIR)/src/common/memory.cpp\
-	$(PROCESSING_SRCDIR)/src/common/thread.cpp\
 	$(PROCESSING_SRCDIR)/src/common/WelsFrameWork.cpp\
 	$(PROCESSING_SRCDIR)/src/common/WelsFrameWorkEx.cpp\
 	$(PROCESSING_SRCDIR)/src/complexityanalysis/ComplexityAnalysis.cpp\
@@ -29,12 +28,25 @@ PROCESSING_ASM_SRCS=\
 PROCESSING_OBJS += $(PROCESSING_ASM_SRCS:.asm=.o)
 endif
 
+ifeq ($(ASM_ARCH), arm)
+PROCESSING_ASM_S_SRCS=\
+	$(PROCESSING_SRCDIR)/src/arm/adaptive_quantization.S\
+	$(PROCESSING_SRCDIR)/src/arm/down_sample_neon.S\
+	$(PROCESSING_SRCDIR)/src/arm/pixel_sad_neon.S\
+	$(PROCESSING_SRCDIR)/src/arm/vaa_calc_neon.S\
+
+PROCESSING_OBJS += $(PROCESSING_ASM_S_SRCS:.S=.o)
+endif
+
 OBJS += $(PROCESSING_OBJS)
 $(PROCESSING_SRCDIR)/%.o: $(PROCESSING_SRCDIR)/%.cpp
 	$(QUIET_CXX)$(CXX) $(CFLAGS) $(CXXFLAGS) $(INCLUDES) $(PROCESSING_CFLAGS) $(PROCESSING_INCLUDES) -c $(CXX_O) $<
 
 $(PROCESSING_SRCDIR)/%.o: $(PROCESSING_SRCDIR)/%.asm
 	$(QUIET_ASM)$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(PROCESSING_ASMFLAGS) $(PROCESSING_ASM_INCLUDES) -o $@ $<
+
+$(PROCESSING_SRCDIR)/%.o: $(PROCESSING_SRCDIR)/%.S
+	$(QUIET_CCAS)$(CCAS) $(CFLAGS) $(ASMFLAGS) $(INCLUDES) $(PROCESSING_CFLAGS) $(PROCESSING_INCLUDES) -c -o $@ $<
 
 $(LIBPREFIX)processing.$(LIBSUFFIX): $(PROCESSING_OBJS)
 	$(QUIET)rm -f $@

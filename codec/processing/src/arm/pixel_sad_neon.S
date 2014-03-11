@@ -1,6 +1,6 @@
 /*!
  * \copy
- *     Copyright (c)  2009-2013, Cisco Systems
+ *     Copyright (c)  2013, Cisco Systems
  *     All rights reserved.
  *
  *     Redistribution and use in source and binary forms, with or without
@@ -28,72 +28,41 @@
  *     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *     POSSIBILITY OF SUCH DAMAGE.
  *
- * \file	thread.cpp
- *
- * \brief	Interfaces introduced in thread programming
- *
- * \date	11/17/2009 Created
- *
- *************************************************************************************
  */
 
-#include "thread.h"
+#ifdef HAVE_NEON
+.text
+#include "arm_arch_common_macro.S"
 
-WELSVP_NAMESPACE_BEGIN
 
-#if defined(_WIN32)
+WELS_ASM_FUNC_BEGIN WelsProcessingSampleSad8x8_neon
+    stmdb sp!, {lr}
+	//Loading a horizontal line data (8 bytes)
+	vld1.8 {d0}, [r0], r1
+	vld1.8 {d1}, [r2], r3
 
-#ifdef WINAPI_FAMILY
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-#define InitializeCriticalSection(x) InitializeCriticalSectionEx(x, 0, 0)
-#endif
-#endif
+	//Do the SAD for 8 bytes
+	vabdl.u8  q1, d0, d1
 
-WELS_THREAD_ERROR_CODE    WelsMutexInit (WELS_MUTEX*    mutex) {
-  InitializeCriticalSection (mutex);
+	mov lr, #7
+pixel_sad_8x8_loop0:
 
-  return WELS_THREAD_ERROR_OK;
-}
+    //Loading a horizontal line data (8 bytes)
+	vld1.8 {d0}, [r0], r1
+	vld1.8 {d1}, [r2], r3
 
-WELS_THREAD_ERROR_CODE    WelsMutexLock (WELS_MUTEX*    mutex) {
-  EnterCriticalSection (mutex);
+	subs lr, #1
 
-  return WELS_THREAD_ERROR_OK;
-}
+	//Do the SAD for 8 bytes
+	vabal.u8  q1, d0, d1
+	bne pixel_sad_8x8_loop0
 
-WELS_THREAD_ERROR_CODE    WelsMutexUnlock (WELS_MUTEX* mutex) {
-  LeaveCriticalSection (mutex);
+	vadd.u16   d2, d3
+	vpaddl.u16 d2, d2
+	vpaddl.u32 d2, d2
+	vmov.u32   r0, d2[0]//TBO...
 
-  return WELS_THREAD_ERROR_OK;
-}
-
-WELS_THREAD_ERROR_CODE    WelsMutexDestroy (WELS_MUTEX* mutex) {
-  DeleteCriticalSection (mutex);
-
-  return WELS_THREAD_ERROR_OK;
-}
-
-#elif  defined(__GNUC__)
-
-WELS_THREAD_ERROR_CODE    WelsMutexInit (WELS_MUTEX*    mutex) {
-  return pthread_mutex_init (mutex, NULL);
-}
-
-WELS_THREAD_ERROR_CODE    WelsMutexLock (WELS_MUTEX*    mutex) {
-  return pthread_mutex_lock (mutex);
-}
-
-WELS_THREAD_ERROR_CODE    WelsMutexUnlock (WELS_MUTEX* mutex) {
-  return pthread_mutex_unlock (mutex);
-}
-
-WELS_THREAD_ERROR_CODE    WelsMutexDestroy (WELS_MUTEX* mutex) {
-  return pthread_mutex_destroy (mutex);
-}
+	ldmia sp!, {lr}
+WELS_ASM_FUNC_END
 
 #endif
-
-WELSVP_NAMESPACE_END
-
-
-

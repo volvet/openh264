@@ -186,13 +186,13 @@ void CWelsH264SVCEncoder::InitEncoder (void) {
   if (m_pWelsTrace != NULL) {
     const int32_t iWelsTraceExistingFlag = m_pWelsTrace->WelsTraceModuleIsExist();
     if (iWelsTraceExistingFlag) {
-      m_pWelsTrace->SetTraceLevel (WELS_LOG_DEFAULT);
+      m_pWelsTrace->SetTraceLevel (WELS_LOG_ERROR);
       WelsSetLogCallback (welsCodecTrace::CODEC_TRACE);
     }
   }
 
   // initialization
-  WelsSetLogLevel (WELS_LOG_DEFAULT);	// no output, WELS_LOG_QUIET
+  WelsSetLogLevel (WELS_LOG_ERROR);	// no output, WELS_LOG_QUIET
 }
 
 /* Interfaces override from ISVCEncoder */
@@ -936,6 +936,22 @@ int CWelsH264SVCEncoder::SetOption (ENCODER_OPTION eOptionId, void* pOption) {
       char* path = static_cast<char*> (pOption);
       m_pEncContext->pSvcParam->pCurPath = path;
     }
+  }
+  break;
+  case ENCODER_OPTION_DUMP_FILE:{
+#ifdef ENABLE_FRAME_DUMP
+    if(m_pEncContext->pSvcParam!=NULL){
+      SDumpLayer*pDump = (static_cast<SDumpLayer *>(pOption));
+      WelsStrncpy(m_pEncContext->pSvcParam->sDependencyLayers[pDump->iLayer].sRecFileName, pDump->pFileName, sizeof(m_pEncContext->pSvcParam->sDependencyLayers[pDump->iLayer].sRecFileName))
+    }
+#endif
+  }
+  break;
+  case ENCODER_OPTION_TRACE_LEVEL:{
+    if(m_pWelsTrace){
+	  uint32_t level = *((uint32_t*)pOption);
+	  m_pWelsTrace->SetTraceLevel(level);
+	}
   }
   break;
   default:

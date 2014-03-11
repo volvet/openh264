@@ -120,7 +120,7 @@
     vrshrn.u16		$8, $6, #2
 .endm
 
-.macro	LORD_CHROMA_DATA_4
+.macro	LOAD_CHROMA_DATA_4
     vld4.u8	{$0[$8],$1[$8],$2[$8],$3[$8]}, [r0], r2
     vld4.u8	{$4[$8],$5[$8],$6[$8],$7[$8]}, [r1], r2
 .endm
@@ -130,7 +130,7 @@
     vst4.u8	{$4[$8],$5[$8],$6[$8],$7[$8]}, [r1], r2
 .endm
 
-.macro	LORD_LUMA_DATA_3
+.macro	LOAD_LUMA_DATA_3
     vld3.u8	{$0[$6],$1[$6],$2[$6]}, [r2], r1
     vld3.u8	{$3[$6],$4[$6],$5[$6]}, [r0], r1
 .endm
@@ -140,7 +140,7 @@
     vst4.u8	{$0[$5],$1[$5],$2[$5],$3[$5]}, [r2], r1
 .endm
 
-.macro	LORD_LUMA_DATA_4
+.macro	LOAD_LUMA_DATA_4
     vld4.u8	{$0[$8],$1[$8],$2[$8],$3[$8]}, [r3], r1
     vld4.u8	{$4[$8],$5[$8],$6[$8],$7[$8]}, [r0], r1
 .endm
@@ -239,7 +239,7 @@
     vrshrn.u16		\arg8, \arg6, #2
 .endm
 
-.macro	LORD_CHROMA_DATA_4 arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
+.macro	LOAD_CHROMA_DATA_4 arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
     vld4.u8	{\arg0[\arg8],\arg1[\arg8],\arg2[\arg8],\arg3[\arg8]}, [r0], r2
     vld4.u8	{\arg4[\arg8],\arg5[\arg8],\arg6[\arg8],\arg7[\arg8]}, [r1], r2
 .endm
@@ -249,7 +249,7 @@
     vst4.u8	{\arg4[\arg8],\arg5[\arg8],\arg6[\arg8],\arg7[\arg8]}, [r1], r2
 .endm
 
-.macro	LORD_LUMA_DATA_3 arg0, arg1, arg2, arg3, arg4, arg5, arg6
+.macro	LOAD_LUMA_DATA_3 arg0, arg1, arg2, arg3, arg4, arg5, arg6
     vld3.u8	{\arg0[\arg6],\arg1[\arg6],\arg2[\arg6]}, [r2], r1
     vld3.u8	{\arg3[\arg6],\arg4[\arg6],\arg5[\arg6]}, [r0], r1
 .endm
@@ -259,7 +259,7 @@
     vst4.u8	{\arg0[\arg5],\arg1[\arg5],\arg2[\arg5],\arg3[\arg5]}, [r2], r1
 .endm
 
-.macro	LORD_LUMA_DATA_4 arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
+.macro	LOAD_LUMA_DATA_4 arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
     vld4.u8	{\arg0[\arg8],\arg1[\arg8],\arg2[\arg8],\arg3[\arg8]}, [r3], r1
     vld4.u8	{\arg4[\arg8],\arg5[\arg8],\arg6[\arg8],\arg7[\arg8]}, [r0], r1
 .endm
@@ -402,23 +402,23 @@ WELS_ASM_FUNC_END
     vdup.u8	q9, r3
 
     sub			r2, r0, #3
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 0
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 1
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 2
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 3
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 4
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 5
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 6
-    LORD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 7
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 0
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 1
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 2
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 3
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 4
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 5
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 6
+    LOAD_LUMA_DATA_3		d0, d1, d2, d6, d7, d8, 7
 
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 0
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 1
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 2
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 3
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 4
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 5
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 6
-    LORD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 7
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 0
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 1
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 2
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 3
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 4
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 5
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 6
+    LOAD_LUMA_DATA_3		d3, d4, d5, d9, d10, d11, 7
 
     vswp		d1, d2
     vswp		d3, d4
@@ -496,23 +496,23 @@ WELS_ASM_FUNC_BEGIN DeblockLumaEq4H_neon
     vdup.u8	q4, r3
 
     sub			r3, r0, #4				//	pix -= 4
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,0
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,1
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,2
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,3
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,4
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,5
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,6
-    LORD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,7
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,0
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,1
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,2
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,3
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,4
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,5
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,6
+    LOAD_LUMA_DATA_4		d16,d17,d18,d19,d24,d25,d26,d27,7
 
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,0
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,1
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,2
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,3
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,4
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,5
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,6
-    LORD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,7
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,0
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,1
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,2
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,3
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,4
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,5
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,6
+    LOAD_LUMA_DATA_4		d20,d21,d22,d23,d28,d29,d30,d31,7
 
     vswp		q9, q10
     vswp		d17,d18
@@ -694,14 +694,14 @@ WELS_ASM_FUNC_BEGIN DeblockChromaLt4H_neon
     sub			r1, r1, #2
     vld1.s8	{d15}, [r3]
 
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 0
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 1
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 2
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 3
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 4
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 5
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 6
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 7
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 0
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 1
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 2
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 3
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 4
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 5
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 6
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 7
     vswp		q1, q2
     vswp		d1, d2
     vswp		d6, d5
@@ -753,14 +753,14 @@ WELS_ASM_FUNC_BEGIN DeblockChromaEq4H_neon
     sub			r0, r0, #2
     sub			r1, r1, #2
 
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 0
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 1
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 2
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 3
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 4
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 5
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 6
-    LORD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 7
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 0
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 1
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 2
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 3
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 4
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 5
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 6
+    LOAD_CHROMA_DATA_4	d0, d1, d2, d3, d4, d5, d6, d7, 7
     vswp		q1, q2
     vswp		d1, d2
     vswp		d6, d5
@@ -795,7 +795,7 @@ WELS_ASM_FUNC_BEGIN DeblockChromaEq4H_neon
 WELS_ASM_FUNC_END
 
 
-WELS_ASM_FUNC_BEGIN enc_avc_non_zero_count_neon
+WELS_ASM_FUNC_BEGIN WelsNonZeroCount_neon
 
     vld1.64	{d0-d2}, [r0]
 
@@ -809,4 +809,230 @@ WELS_ASM_FUNC_BEGIN enc_avc_non_zero_count_neon
     vst1.64	{d0-d2}, [r0]
 WELS_ASM_FUNC_END
 
+#ifdef APPLE_IOS
+.macro BS_NZC_CHECK
+    vld1.8   {d0,d1}, [$0]
+    /* Arrenge the input data --- TOP */
+	ands     r6, $1, #2
+	beq      bs_nzc_check_jump0
+
+    sub      r6, $0, $2, lsl #4
+	sub      r6, $2, lsl #3
+    add      r6, #12
+    vld1.32  d3[1], [r6]
+
+bs_nzc_check_jump0:
+    vext.8   q1, q1, q0, #12
+	vadd.u8  $3, q0, q1
+
+
+    /* Arrenge the input data --- LEFT */
+	ands     r6, $1, #1
+	beq      bs_nzc_check_jump1
+
+    sub      r6, $0, #21
+	add      r7, r6, #4
+    vld1.8   d3[4], [r6]
+	add      r6, r7, #4
+    vld1.8   d3[5], [r7]
+	add      r7, r6, #4
+    vld1.8   d3[6], [r6]
+    vld1.8   d3[7], [r7]
+
+bs_nzc_check_jump1:
+	vzip.8   d0, d1
+	vzip.8   d0, d1
+    vext.8   q1, q1, q0, #12
+	vadd.u8  $4, q0, q1
+.endm
+
+.macro BS_COMPARE_MV //in: $0,$1(const),$2(const),$3(const),$4(const); out:$5, $6
+    mov       r6, #4
+    vabd.s16  q5, $0, $1
+    vabd.s16  q6, $1, $2
+	vdup.s16  $0, r6
+    vabd.s16  q7, $2, $3
+    vabd.s16  q8, $3, $4
+
+    vcge.s16  q5, $0
+    vcge.s16  q6, $0
+    vcge.s16  q7, $0
+    vcge.s16  q8, $0
+
+	vpadd.i16 d10, d10, d11
+    vpadd.i16 d11, d12, d13
+    vpadd.i16 d12, d14, d15
+    vpadd.i16 d13, d16, d17
+
+    vaddhn.i16  $5, q5, q5
+    vaddhn.i16  $6, q6, q6
+.endm
+
+.macro BS_MV_CHECK
+    vldm   $0, {q0,q1,q2,q3}
+
+    /* Arrenge the input data --- TOP */
+	ands     r6, $1, #2
+	beq      bs_mv_check_jump0
+
+    sub      r6, $0, $2, lsl #6
+    add      r6, #48
+    vld1.8   {d8, d9}, [r6]
+
+bs_mv_check_jump0:
+    BS_COMPARE_MV  q4, q0, q1, q2, q3, $3, $4
+
+    /* Arrenge the input data --- LEFT */
+	ands     r6, $1, #1
+	beq      bs_mv_check_jump1
+
+    sub      r6, $0, #52
+    add      r7, r6, #16
+	vld1.32   d8[0], [r6]
+	add      r6, r7, #16
+    vld1.32   d8[1], [r7]
+	add      r7, r6, #16
+    vld1.32   d9[0], [r6]
+    vld1.32   d9[1], [r7]
+
+bs_mv_check_jump1:
+	vzip.32   q0, q2
+	vzip.32   q1, q3
+	vzip.32   q0, q1
+    vzip.32   q2, q3
+    BS_COMPARE_MV  q4, q0, q1, q2, q3, $5, $6
+.endm
+#else
+.macro BS_NZC_CHECK  arg0, arg1, arg2, arg3, arg4
+    vld1.8   {d0,d1}, [\arg0]
+    /* Arrenge the input data --- TOP */
+    ands     r6, \arg1, #2
+    beq      bs_nzc_check_jump0
+
+    sub      r6, \arg0, \arg2, lsl #4
+    sub      r6, r6, \arg2, lsl #3
+    add      r6, #12
+    vld1.32  d3[1], [r6]
+
+    bs_nzc_check_jump0:
+    vext.8   q1, q1, q0, #12
+    vadd.u8  \arg3, q0, q1
+
+
+    /* Arrenge the input data --- LEFT */
+    ands     r6, \arg1, #1
+    beq      bs_nzc_check_jump1
+
+    sub      r6, \arg0, #21
+    add      r7, r6, #4
+    vld1.8   d3[4], [r6]
+    add      r6, r7, #4
+    vld1.8   d3[5], [r7]
+    add      r7, r6, #4
+    vld1.8   d3[6], [r6]
+    vld1.8   d3[7], [r7]
+
+    bs_nzc_check_jump1:
+    vzip.8   d0, d1
+    vzip.8   d0, d1
+    vext.8   q1, q1, q0, #12
+    vadd.u8  \arg4, q0, q1
+.endm
+
+.macro BS_COMPARE_MV  arg0, arg1, arg2, arg3, arg4, arg5, arg6 //in: $0,$1(const),$2(const),$3(const),$4(const); out:$5, $6
+    mov       r6, #4
+    vabd.s16  q5, \arg0, \arg1
+    vabd.s16  q6, \arg1, \arg2
+    vdup.s16  \arg0, r6
+    vabd.s16  q7, \arg2, \arg3
+    vabd.s16  q8, \arg3, \arg4
+
+    vcge.s16  q5, \arg0
+    vcge.s16  q6, \arg0
+    vcge.s16  q7, \arg0
+    vcge.s16  q8, \arg0
+
+    vpadd.i16 d10, d10, d11
+    vpadd.i16 d11, d12, d13
+    vpadd.i16 d12, d14, d15
+    vpadd.i16 d13, d16, d17
+
+    vaddhn.i16  \arg5, q5, q5
+    vaddhn.i16  \arg6, q6, q6
+.endm
+
+.macro BS_MV_CHECK  arg0, arg1, arg2, arg3, arg4, arg5, arg6
+    vldm   \arg0, {q0,q1,q2,q3}
+
+    /* Arrenge the input data --- TOP */
+    ands     r6, \arg1, #2
+    beq      bs_mv_check_jump0
+
+    sub      r6, \arg0, \arg2, lsl #6
+    add      r6, #48
+    vld1.8   {d8, d9}, [r6]
+
+    bs_mv_check_jump0:
+    BS_COMPARE_MV  q4, q0, q1, q2, q3, \arg3, \arg4
+
+    /* Arrenge the input data --- LEFT */
+    ands     r6, \arg1, #1
+    beq      bs_mv_check_jump1
+
+    sub      r6, \arg0, #52
+    add      r7, r6, #16
+    vld1.32   d8[0], [r6]
+    add      r6, r7, #16
+    vld1.32   d8[1], [r7]
+    add      r7, r6, #16
+    vld1.32   d9[0], [r6]
+    vld1.32   d9[1], [r7]
+
+    bs_mv_check_jump1:
+    vzip.32   q0, q2
+    vzip.32   q1, q3
+    vzip.32   q0, q1
+    vzip.32   q2, q3
+    BS_COMPARE_MV  q4, q0, q1, q2, q3, \arg5, \arg6
+.endm
+#endif
+
+
+WELS_ASM_FUNC_BEGIN DeblockingBSCalcEnc_neon
+
+	stmdb sp!, {r5-r7}
+
+	ldr  r5, [sp, #12]	//Save BS to r5
+
+	/* Checking the nzc status */
+	BS_NZC_CHECK r0, r2, r3, q14, q15 //q14,q15 save the nzc status
+
+	/* For checking bS[I] = 2 */
+	mov      r6, #2
+	vcgt.s8  q14, q14, #0
+	vdup.u8  q0, r6
+	vcgt.s8  q15, q15, #0
+
+	vand.u8  q14, q14, q0 //q14 save the nzc check result all the time --- for dir is top
+	vand.u8  q15, q15, q0 //q15 save the nzc check result all the time --- for dir is left
+
+	/* Checking the mv status*/
+	BS_MV_CHECK r1, r2, r3, d24, d25, d26, d27//q12, q13 save the mv status
+
+	/* For checking bS[I] = 1 */
+    mov      r6, #1
+	vdup.u8  q0, r6
+
+	vand.u8  q12, q12, q0 //q12 save the nzc check result all the time --- for dir is top
+	vand.u8  q13, q13, q0 //q13 save the nzc check result all the time --- for dir is left
+
+
+	/* Check bS[I] is '1' or '2' */
+	vmax.u8 q1, q12, q14
+	vmax.u8 q0, q13, q15
+
+	//vstm r5, {q0, q1}
+    vst1.32 {q0, q1}, [r5]
+	ldmia sp!, {r5-r7}
+WELS_ASM_FUNC_END
 #endif

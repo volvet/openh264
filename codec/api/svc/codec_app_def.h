@@ -89,7 +89,9 @@ typedef enum {
   ENCODER_OPTION_ENABLE_PREFIX_NAL_ADDING,   //enable prefix: true--enable prefix; false--disable prefix
   ENCODER_OPTION_ENABLE_SPS_PPS_ID_ADDITION, //disable pSps/pPps id addition: true--disable pSps/pPps id; false--enable pSps/pPps id addistion
 
-  ENCODER_OPTION_CURRENT_PATH
+  ENCODER_OPTION_CURRENT_PATH,
+  ENCODER_OPTION_DUMP_FILE,
+  ENCODER_OPTION_TRACE_LEVEL
 } ENCODER_OPTION;
 
 /* Option types introduced in decoder application */
@@ -152,14 +154,17 @@ typedef struct {
     unsigned int		uiSliceSizeConstraint;
   } SSliceArgument;//not all the elements in this argument will be used, how it will be used depends on uiSliceMode; see below
 
-typedef struct {
+typedef enum {
+  SM_SINGLE_SLICE         = 0, //	| SliceNum==1
+  SM_FIXEDSLCNUM_SLICE    = 1, //	| according to SliceNum		| Enabled dynamic slicing for multi-thread
+  SM_RASTER_SLICE         = 2, //	| according to SlicesAssign	| Need input of MB numbers each slice. In addition, if other constraint in SSliceArgument is presented, need to follow the constraints. Typically if MB num and slice size are both constrained, re-encoding may be involved.
+  SM_ROWMB_SLICE          = 3, //	| according to PictureMBHeight	| Typical of single row of mbs each slice?+ slice size constraint which including re-encoding
+  SM_DYN_SLICE            = 4, //	| according to SliceSize	| Dynamic slicing (have no idea about slice_nums until encoding current frame)
+  SM_RESERVED             = 5
+} SliceModeEnum;
 
-  //# 0 SM_SINGLE_SLICE			| SliceNum==1
-  //# 1 SM_FIXEDSLCNUM_SLICE	| according to SliceNum			| Enabled dynamic slicing for multi-thread
-  //# 2 SM_RASTER_SLICE			| according to SlicesAssign		| Need input of MB numbers each slice. In addition, if other constraint in SSliceArgument is presented, need to follow the constraints. Typically if MB num and slice size are both constrained, re-encoding may be involved.
-  //# 3 SM_ROWMB_SLICE			| according to PictureMBHeight	|  Typical of single row of mbs each slice?+ slice size constraint which including re-encoding
-  //# 4 SM_DYN_SLICE			| according to SliceSize		| Dynamic slicing (have no idea about slice_nums until encoding current frame)
-  unsigned int uiSliceMode; //by default, uiSliceMode will be 0
+typedef struct {
+  SliceModeEnum uiSliceMode; //by default, uiSliceMode will be SM_SINGLE_SLICE
   SSliceArgument sSliceArgument;
 } SSliceConfig;
 
@@ -226,16 +231,11 @@ typedef struct TagEncParamExt
 
   /* multi-thread settings*/
   short		iMultipleThreadIdc;		// 1	# 0: auto(dynamic imp. internal encoder); 1: multiple threads imp. disabled; > 1: count number of threads;
-  short		iCountThreadsNum;			//		# derived from disable_multiple_slice_idc (=0 or >1) means;
 
    /* Deblocking loop filter */
   int		iLoopFilterDisableIdc;	// 0: on, 1: off, 2: on except for slice boundaries
   int		iLoopFilterAlphaC0Offset;// AlphaOffset: valid range [-6, 6], default 0
   int		iLoopFilterBetaOffset;	// BetaOffset:	valid range [-6, 6], default 0
-  int		iInterLayerLoopFilterDisableIdc; // Employed based upon inter-layer, same comment as above
-  int		iInterLayerLoopFilterAlphaC0Offset;	// InterLayerLoopFilterAlphaC0Offset
-  int		iInterLayerLoopFilterBetaOffset;	// InterLayerLoopFilterBetaOffset
-
   /*pre-processing feature*/
   bool    bEnableDenoise;	    // denoise control
   bool    bEnableBackgroundDetection;// background detection control //VAA_BACKGROUND_DETECTION //BGD cmd
@@ -299,5 +299,8 @@ typedef struct Source_Picture_s {
   long long uiTimeStamp;
 } SSourcePicture;
 
-
+typedef struct Dump_Layer_s{
+	int iLayer;
+	char *pFileName;
+}SDumpLayer;
 #endif//WELS_VIDEO_CODEC_APPLICATION_DEFINITION_H__

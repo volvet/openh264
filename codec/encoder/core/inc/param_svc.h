@@ -124,9 +124,8 @@ struct {
 char*       pCurPath; // record current lib path such as:/pData/pData/com.wels.enc/lib/
 
 bool		bDeblockingParallelFlag;	// deblocking filter parallelization control flag
-bool		bMgsT0OnlyStrategy; //MGS_T0_only_strategy
 
-// FALSE: Streaming Video Sharing; TRUE: Video Conferencing Meeting;
+short         iCountThreadsNum;                       //              # derived from disable_multiple_slice_idc (=0 or >1) means;
 
 int8_t		iDecompStages;		// GOP size dependency
 
@@ -156,7 +155,6 @@ static void FillDefault (SEncParamExt& param, const bool kbEnableRc) {
   param.iMultipleThreadIdc		=
     1;	// 1 # 0: auto(dynamic imp. internal encoder); 1: multiple threads imp. disabled; > 1: count number of threads;
 #endif//MT_ENABLED
-  param.iCountThreadsNum		= 1;	//		# derived from disable_multiple_slice_idc (=0 or >1) means;
 
   param.iLTRRefNum				= 0;
   param.iLtrMarkPeriod			= 30;	//the min distance of two int32_t references
@@ -169,10 +167,7 @@ static void FillDefault (SEncParamExt& param, const bool kbEnableRc) {
   param.iLoopFilterDisableIdc		= 1;	// 0: on, 1: off, 2: on except for slice boundaries
   param.iLoopFilterAlphaC0Offset	= 0;	// AlphaOffset: valid range [-6, 6], default 0
   param.iLoopFilterBetaOffset		= 0;	// BetaOffset:	valid range [-6, 6], default 0
-  param.iInterLayerLoopFilterDisableIdc		= 1;	// Employed based upon inter-layer, same comment as above
-  param.iInterLayerLoopFilterAlphaC0Offset	= 0;	// InterLayerLoopFilterAlphaC0Offset
-  param.iInterLayerLoopFilterBetaOffset		= 0;	// InterLayerLoopFilterBetaOffset
-
+ 
   /* Rate Control */
   param.bEnableRc		= kbEnableRc;
   param.iRCMode			= 0;
@@ -195,7 +190,7 @@ static void FillDefault (SEncParamExt& param, const bool kbEnableRc) {
 
   param.sSpatialLayers[0].iDLayerQp = SVC_QUALITY_BASE_QP;
   param.sSpatialLayers[0].fFrameRate = param.fMaxFrameRate;
-  param.sSpatialLayers[0].sSliceCfg.uiSliceMode = 0;
+  param.sSpatialLayers[0].sSliceCfg.uiSliceMode = SM_SINGLE_SLICE;
   param.sSpatialLayers[0].sSliceCfg.sSliceArgument.uiSliceSizeConstraint = 1500;
   param.sSpatialLayers[0].sSliceCfg.sSliceArgument.uiSliceNum = 1;
 
@@ -217,8 +212,8 @@ void FillDefault (const bool kbEnableRc) {
 
   bDeblockingParallelFlag = false;	// deblocking filter parallelization control flag
 
-  bMgsT0OnlyStrategy			=
-    true;	// Strategy of have MGS only at T0 frames (0: do not use this strategy; 1: use this strategy)
+  iCountThreadsNum		= 1;	//		# derived from disable_multiple_slice_idc (=0 or >1) means;
+
   iDecompStages				= 0;	// GOP size dependency, unknown here and be revised later
 
   memset(sDependencyLayers,0,sizeof(SDLayerParam)*MAX_DEPENDENCY_LAYER);
@@ -226,7 +221,7 @@ void FillDefault (const bool kbEnableRc) {
 
 
   //init multi-slice
-   sDependencyLayers[0].sSliceCfg.uiSliceMode = 0;
+   sDependencyLayers[0].sSliceCfg.uiSliceMode = SM_SINGLE_SLICE;
    sDependencyLayers[0].sSliceCfg.sSliceArgument.uiSliceSizeConstraint    = 1500;
    sDependencyLayers[0].sSliceCfg.sSliceArgument.uiSliceNum      = 1;
 
@@ -327,9 +322,6 @@ int32_t ParamTranscode (const SEncParamExt& pCodingParam) {
 #endif
   iLoopFilterAlphaC0Offset = 0;	// AlphaOffset: valid range [-6, 6], default 0
   iLoopFilterBetaOffset	= 0;	// BetaOffset:	valid range [-6, 6], default 0
-  iInterLayerLoopFilterDisableIdc	= iLoopFilterDisableIdc;	// Employed based upon inter-layer, same comment as above
-  iInterLayerLoopFilterAlphaC0Offset = 0;
-  iInterLayerLoopFilterBetaOffset	= 0;
 
   bEnableFrameCroppingFlag	= true;
 
@@ -361,6 +353,8 @@ int32_t ParamTranscode (const SEncParamExt& pCodingParam) {
   /* Enable int32_t term reference */
   bEnableLongTermReference	= pCodingParam.bEnableLongTermReference ? true : false;
   iLtrMarkPeriod = pCodingParam.iLtrMarkPeriod;
+
+  iMultipleThreadIdc = pCodingParam.iMultipleThreadIdc;
 
   /* For ssei information */
   bEnableSSEI		= true;
@@ -414,7 +408,7 @@ int32_t ParamTranscode (const SEncParamExt& pCodingParam) {
 
 
     //multi slice
-    pDlp->sSliceCfg.uiSliceMode = (SliceMode)pCodingParam.sSpatialLayers[iIdxSpatial].sSliceCfg.uiSliceMode;
+    pDlp->sSliceCfg.uiSliceMode = pCodingParam.sSpatialLayers[iIdxSpatial].sSliceCfg.uiSliceMode;
     pDlp->sSliceCfg.sSliceArgument.uiSliceSizeConstraint
       = (uint32_t) (pCodingParam.sSpatialLayers[iIdxSpatial].sSliceCfg.sSliceArgument.uiSliceSizeConstraint);
     pDlp->sSliceCfg.sSliceArgument.uiSliceNum
