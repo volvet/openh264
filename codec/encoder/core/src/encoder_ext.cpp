@@ -1730,8 +1730,8 @@ int32_t InitSliceSettings (SWelsSvcCodingParam* pCodingParam, const int32_t kiCp
       break;
     case SM_AUTO_SLICE:
       iMaxSliceCount = MAX_SLICES_NUM;
-	  pDlp->sSliceCfg.sSliceArgument.uiSliceNum = kiCpuCores;
-	  if (pDlp->sSliceCfg.sSliceArgument.uiSliceNum > iMaxSliceCount){
+      pDlp->sSliceCfg.sSliceArgument.uiSliceNum = kiCpuCores;
+      if (pDlp->sSliceCfg.sSliceArgument.uiSliceNum > iMaxSliceCount){
         pDlp->sSliceCfg.sSliceArgument.uiSliceNum = iMaxSliceCount;
       }
       if (pDlp->sSliceCfg.sSliceArgument.uiSliceNum == 1) {
@@ -2471,7 +2471,8 @@ void PreprocessSliceCoding (sWelsEncCtx* pCtx) {
   if (P_SLICE == pCtx->eSliceType) {
     if (kbBaseAvail) {
       if (pCtx->pSvcParam->iSpatialLayerNum == (pCurLayer->sLayerInfo.sNalHeaderExt.uiDependencyId + 1)) { //
-        pCtx->pFuncList->pfMotionSearch = WelsMotionEstimateSearchSad;
+        pCtx->pFuncList->pfMotionSearch = WelsMotionEstimateSearch;
+        pCtx->pFuncList->pfCalculateSatd = NotCalculateSatdCost;
         pCtx->pFuncList->pfFirstIntraMode = WelsMdFirstIntraMode;
         pCtx->pFuncList->pfIntraFineMd = WelsMdIntraFinePartitionVaa;
         pCtx->pFuncList->pfInterFineMd = WelsMdInterFinePartitionVaa;
@@ -2480,7 +2481,8 @@ void PreprocessSliceCoding (sWelsEncCtx* pCtx) {
           pCtx->pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Sad;
         pCtx->pFuncList->sSampleDealingFuncs.pfMdCost = pCtx->pFuncList->sSampleDealingFuncs.pfSampleSad;
       } else {
-        pCtx->pFuncList->pfMotionSearch  = WelsMotionEstimateSearchSatd;
+        pCtx->pFuncList->pfMotionSearch  = WelsMotionEstimateSearch;
+        pCtx->pFuncList->pfCalculateSatd = CalculateSatdCost;
         pCtx->pFuncList->pfFirstIntraMode = WelsMdFirstIntraMode;
         pCtx->pFuncList->pfIntraFineMd = WelsMdIntraFinePartition;
         pCtx->pFuncList->pfInterFineMd = WelsMdInterFinePartition;
@@ -2494,7 +2496,8 @@ void PreprocessSliceCoding (sWelsEncCtx* pCtx) {
     } else {
       //case 3: pBase layer MD + encoding
       if (pCurLayer->sLayerInfo.sNalHeaderExt.uiDependencyId + 1 == pCtx->pSvcParam->iSpatialLayerNum) {
-        pCtx->pFuncList->pfMotionSearch  = WelsMotionEstimateSearchSad;
+        pCtx->pFuncList->pfMotionSearch  = WelsMotionEstimateSearch;
+        pCtx->pFuncList->pfCalculateSatd = NotCalculateSatdCost;
         pCtx->pFuncList->pfFirstIntraMode = WelsMdFirstIntraMode;
         pCtx->pFuncList->pfIntraFineMd = WelsMdIntraFinePartitionVaa;
         pCtx->pFuncList->pfInterFineMd = WelsMdInterFinePartitionVaa;
@@ -2503,7 +2506,8 @@ void PreprocessSliceCoding (sWelsEncCtx* pCtx) {
           pCtx->pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Sad;
         pCtx->pFuncList->sSampleDealingFuncs.pfIntra8x8Combined3 = pCtx->pFuncList->sSampleDealingFuncs.pfIntra8x8Combined3Sad;
       } else {
-        pCtx->pFuncList->pfMotionSearch  = WelsMotionEstimateSearchSatd;
+        pCtx->pFuncList->pfMotionSearch  = WelsMotionEstimateSearch;
+        pCtx->pFuncList->pfCalculateSatd = CalculateSatdCost;
         pCtx->pFuncList->pfFirstIntraMode = WelsMdFirstIntraMode;
         pCtx->pFuncList->pfIntraFineMd = WelsMdIntraFinePartition;
         pCtx->pFuncList->pfInterFineMd = WelsMdInterFinePartition;

@@ -135,16 +135,6 @@
 
 
 ;***********************************************************************
-; Local Data (Read Only)
-;***********************************************************************
-
-;SECTION .rodata align=16
-
-;ALIGN 16
-;pack1_8x2:
-;	dw 1, 1, 1, 1, 1, 1, 1, 1
-
-;***********************************************************************
 ; Code
 ;***********************************************************************
 
@@ -152,16 +142,14 @@ SECTION .text
 
 ; , 6/7/2010
 
-WELS_EXTERN AnalysisVaaInfoIntra_sse2
 ;***********************************************************************
 ;	int32_t AnalysisVaaInfoIntra_sse2(	uint8_t *pDataY, const int32_t iLineSize );
 ;***********************************************************************
-ALIGN 16
-AnalysisVaaInfoIntra_sse2:
+WELS_EXTERN AnalysisVaaInfoIntra_sse2
 
     %assign push_num 0
     LOAD_2_PARA
-    SIGN_EXTENTION r1,r1d
+    SIGN_EXTENSION r1,r1d
 
 %ifdef X86_32
     push r3
@@ -247,16 +235,14 @@ AnalysisVaaInfoIntra_sse2:
 
 	ret
 
-WELS_EXTERN AnalysisVaaInfoIntra_ssse3
 ;***********************************************************************
 ;	int32_t AnalysisVaaInfoIntra_ssse3(	uint8_t *pDataY, const int32_t iLineSize );
 ;***********************************************************************
-ALIGN 16
-AnalysisVaaInfoIntra_ssse3:
+WELS_EXTERN AnalysisVaaInfoIntra_ssse3
 
     %assign push_num 0
     LOAD_2_PARA
-    SIGN_EXTENTION r1,r1d
+    SIGN_EXTENSION r1,r1d
 
 %ifdef X86_32
     push r3
@@ -342,12 +328,10 @@ AnalysisVaaInfoIntra_ssse3:
 
 	ret
 
-WELS_EXTERN MdInterAnalysisVaaInfo_sse41
 ;***********************************************************************
 ;	uint8_t MdInterAnalysisVaaInfo_sse41( int32_t *pSad8x8 )
 ;***********************************************************************
-ALIGN 16
-MdInterAnalysisVaaInfo_sse41:
+WELS_EXTERN MdInterAnalysisVaaInfo_sse41
 	%assign push_num 0
 	LOAD_1_PARA
 	movdqa xmm0,[r0]
@@ -378,12 +362,10 @@ MdInterAnalysisVaaInfo_sse41:
 	mov retrd, 15
 	ret
 
-WELS_EXTERN MdInterAnalysisVaaInfo_sse2
 ;***********************************************************************
 ;	uint8_t MdInterAnalysisVaaInfo_sse2( int32_t *pSad8x8 )
 ;***********************************************************************
-ALIGN 16
-MdInterAnalysisVaaInfo_sse2:
+WELS_EXTERN MdInterAnalysisVaaInfo_sse2
 	%assign push_num 0
 	LOAD_1_PARA
 	movdqa xmm0, [r0]

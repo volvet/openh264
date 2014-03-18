@@ -49,17 +49,6 @@
 ;***********************************************************************
 
 ;***********************************************************************
-; Local Data (Read Only)
-;***********************************************************************
-
-;SECTION .rodata pData align=16
-
-;***********************************************************************
-; Various memory constants (trigonometric values or rounding values)
-;***********************************************************************
-;%define PADDING_SIZE_ASM 	32 	; PADDING_LENGTH
-
-;***********************************************************************
 ; Code
 ;***********************************************************************
 
@@ -67,9 +56,6 @@
 
 SECTION .text
 
-WELS_EXTERN ExpandPictureLuma_sse2
-WELS_EXTERN ExpandPictureChromaAlign_sse2	; for chroma alignment
-WELS_EXTERN ExpandPictureChromaUnalign_sse2	; for chroma unalignment
 
 ;;;;;;;expanding result;;;;;;;
 
@@ -360,14 +346,13 @@ WELS_EXTERN ExpandPictureChromaUnalign_sse2	; for chroma unalignment
 %endif
 %endmacro
 
-ALIGN 16
 ;***********************************************************************----------------
 ; void ExpandPictureLuma_sse2(	uint8_t *pDst,
 ;									const int32_t iStride,
 ;									const int32_t iWidth,
 ;									const int32_t iHeight	);
 ;***********************************************************************----------------
-ExpandPictureLuma_sse2:
+WELS_EXTERN ExpandPictureLuma_sse2
 
     push r4
     push r5
@@ -376,9 +361,9 @@ ExpandPictureLuma_sse2:
     %assign push_num 3
     LOAD_4_PARA
 
-    SIGN_EXTENTION r1, r1d
-    SIGN_EXTENTION r2, r2d
-    SIGN_EXTENTION r3, r3d
+    SIGN_EXTENSION r1, r1d
+    SIGN_EXTENSION r2, r2d
+    SIGN_EXTENSION r3, r3d
 
     ;also prepare for cross border pData top-left:xmm3
 
@@ -487,14 +472,13 @@ ExpandPictureLuma_sse2:
 
 	ret
 
-ALIGN 16
 ;***********************************************************************----------------
 ; void ExpandPictureChromaAlign_sse2(	uint8_t *pDst,
 ;										const int32_t iStride,
 ;										const int32_t iWidth,
 ;										const int32_t iHeight	);
 ;***********************************************************************----------------
-ExpandPictureChromaAlign_sse2:
+WELS_EXTERN ExpandPictureChromaAlign_sse2
 
     push r4
     push r5
@@ -503,9 +487,9 @@ ExpandPictureChromaAlign_sse2:
     %assign push_num 3
     LOAD_4_PARA
 
-    SIGN_EXTENTION r1,r1d
-    SIGN_EXTENTION r2,r2d
-    SIGN_EXTENTION r3,r3d
+    SIGN_EXTENSION r1,r1d
+    SIGN_EXTENSION r2,r2d
+    SIGN_EXTENSION r3,r3d
 
     ;also prepare for cross border pData top-left:xmm3
 
@@ -613,14 +597,13 @@ ExpandPictureChromaAlign_sse2:
 
 	ret
 
-ALIGN 16
 ;***********************************************************************----------------
 ; void ExpandPictureChromaUnalign_sse2(	uint8_t *pDst,
 ;										const int32_t iStride,
 ;										const int32_t iWidth,
 ;										const int32_t iHeight	);
 ;***********************************************************************----------------
-ExpandPictureChromaUnalign_sse2:
+WELS_EXTERN ExpandPictureChromaUnalign_sse2
 	push r4
     push r5
     push r6
@@ -628,9 +611,9 @@ ExpandPictureChromaUnalign_sse2:
     %assign push_num 3
     LOAD_4_PARA
 
-    SIGN_EXTENTION r1,r1d
-    SIGN_EXTENTION r2,r2d
-    SIGN_EXTENTION r3,r3d
+    SIGN_EXTENSION r1,r1d
+    SIGN_EXTENSION r2,r2d
+    SIGN_EXTENSION r3,r3d
 
     ;also prepare for cross border pData top-left:xmm3
 

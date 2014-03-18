@@ -59,14 +59,20 @@ uint16_t*					pMvdCost;
 union SadPredISatdUnit	uSadPredISatd; //reuse the sad_pred as a temp pData
 uint32_t					uiSadCost;  //used by ME and RC //max SAD should be max_delta*size+lambda*mvdsize = 255*256+91*33*2 = 65280 + 6006 = 71286 > (2^16)-1 = 65535
 uint32_t					uiSatdCost; /* satd + lm * nbits */
+uint32_t					uiSadCostThreshold;
+int32_t						iCurMeBlockPixX;
+int32_t						iCurMeBlockPixY;
 uint8_t						uiPixel;   /* PIXEL_WxH */
 uint8_t						uiReserved;
 
 uint8_t*						pEncMb;
 uint8_t*						pRefMb;
+uint8_t*						pColoRefMb;
 
 SMVUnitXY					sMvp;
 SMVUnitXY					sMvBase;
+SMVUnitXY					sDirectionalMv;
+
 /* output */
 SMVUnitXY					sMv;
 } SWelsME;
@@ -83,10 +89,7 @@ SMVUnitXY					sMv;
  *
  * \return	NONE
  */
-void WelsMotionEstimateSearchSatd (SWelsFuncPtrList* pFuncList, void* pLplayer, void* pLpme, void* pLpslice);
-
-void WelsMotionEstimateSearchSad (SWelsFuncPtrList* pFuncList, void* pLplayer, void* pLpme, void* pLpslice);
-
+void WelsMotionEstimateSearch (SWelsFuncPtrList* pFuncList, void* pLplayer, void* pLpme, void* pLpslice);
 
 
 /*!
@@ -112,7 +115,7 @@ void WelsMotionEstimateSearchSad (SWelsFuncPtrList* pFuncList, void* pLplayer, v
  * \return	NONE
  */
 
-void WelsMotionEstimateInitialPoint (SWelsFuncPtrList* pFuncList, SWelsME* pMe, SSlice* pSlice,
+bool WelsMotionEstimateInitialPoint (SWelsFuncPtrList* pFuncList, SWelsME* pMe, SSlice* pSlice,
                                      const int32_t kiStrideEnc, const int32_t kiStrideRef);
 
 /*!
@@ -129,6 +132,9 @@ void WelsMotionEstimateIterativeSearch (SWelsFuncPtrList* pFuncList, SWelsME* pM
 
 bool WelsMeSadCostSelect (int32_t* pSadCost, const uint16_t* kpMvdCost, int32_t* pBestCost, const int32_t kiDx,
                             const int32_t kiDy, int32_t* pIx, int32_t* pIy);
+
+void CalculateSatdCost( PSampleSadSatdCostFunc pSatd, void * vpMe, const int32_t kiEncStride, const int32_t kiRefStride );
+void NotCalculateSatdCost( PSampleSadSatdCostFunc pSatd, void * vpMe, const int32_t kiEncStride, const int32_t kiRefStride );
 
 inline void SetMvWithinMvRange( const int32_t kiMbWidth, const int32_t kiMbHeight, const int32_t kiMbX, const int32_t kiMbY,
                         const int32_t kiMaxMvRange,

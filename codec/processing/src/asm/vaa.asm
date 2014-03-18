@@ -238,16 +238,6 @@
 
 
 ;***********************************************************************
-; Local Data (Read Only)
-;***********************************************************************
-
-;SECTION .rodata align=16
-
-;ALIGN 16
-;pack1_8x2:
-;       dw 1, 1, 1, 1, 1, 1, 1, 1
-
-;***********************************************************************
 ; Code
 ;***********************************************************************
 
@@ -255,12 +245,10 @@ SECTION .text
 
 %ifdef X86_32
 
-WELS_EXTERN SampleVariance16x16_sse2
 ;***********************************************************************
 ;   void SampleVariance16x16_sse2(      uint8_t * y_ref, int32_t y_ref_stride, uint8_t * y_src, int32_t y_src_stride,SMotionTextureUnit* pMotionTexture );
 ;***********************************************************************
-ALIGN 16
-SampleVariance16x16_sse2:
+WELS_EXTERN SampleVariance16x16_sse2
   push esi
   push edi
   push ebx
@@ -357,15 +345,13 @@ SampleVariance16x16_sse2:
 
 
 
-WELS_EXTERN VAACalcSad_sse2
 ;*************************************************************************************************************
 ;void VAACalcSad_sse2( const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight
 ;                                                               int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSad_sse2:
+WELS_EXTERN VAACalcSad_sse2
 %define         cur_data                        esp + pushsize + 4
 %define         ref_data                        esp + pushsize + 8
 %define         iPicWidth                       esp + pushsize + 12
@@ -451,12 +437,10 @@ width_loop:
 
 %else  ;64-bit
 
-WELS_EXTERN SampleVariance16x16_sse2
 ;***********************************************************************
 ;   void SampleVariance16x16_sse2(      uint8_t * y_ref, int32_t y_ref_stride, uint8_t * y_src, int32_t y_src_stride,SMotionTextureUnit* pMotionTexture );
 ;***********************************************************************
-ALIGN 16
-SampleVariance16x16_sse2:
+WELS_EXTERN SampleVariance16x16_sse2
   %define SUM                   r10;[esp]
   %define SUM_CUR               r11;[esp+4]
   %define SQR                   r13;[esp+8]
@@ -468,8 +452,8 @@ SampleVariance16x16_sse2:
   push r15
   %assign push_num 4
   LOAD_5_PARA
-  SIGN_EXTENTION r1,r1d
-  SIGN_EXTENTION r3,r3d
+  SIGN_EXTENSION r1,r1d
+  SIGN_EXTENSION r3,r3d
 
   mov r12,010h
   pxor xmm7, xmm7
@@ -549,15 +533,13 @@ SampleVariance16x16_sse2:
   ret
 
 
-WELS_EXTERN VAACalcSad_sse2
 ;*************************************************************************************************************
 ;void VAACalcSad_sse2( const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight
 ;                                                               int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSad_sse2:
+WELS_EXTERN VAACalcSad_sse2
 %define         cur_data                        r0
 %define         ref_data                        r1
 %define         iPicWidth                       r2
@@ -570,9 +552,9 @@ VAACalcSad_sse2:
   push r13
   %assign push_num 2
   LOAD_7_PARA
-  SIGN_EXTENTION r2,r2d
-  SIGN_EXTENTION r3,r3d
-  SIGN_EXTENTION r4,r4d
+  SIGN_EXTENSION r2,r2d
+  SIGN_EXTENSION r3,r3d
+  SIGN_EXTENSION r4,r4d
 
   mov   r12,r4
   shr           r2,     4                                       ; iPicWidth/16
@@ -647,15 +629,13 @@ width_loop:
 
 
 %ifdef X86_32
-WELS_EXTERN VAACalcSadVar_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadVar_sse2( const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight
 ;               int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8, int32_t *psum16x16, int32_t *psqsum16x16)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadVar_sse2:
+WELS_EXTERN VAACalcSadVar_sse2
 %define         localsize               8
 %define         cur_data                        esp + pushsize + localsize + 4
 %define         ref_data                        esp + pushsize + localsize + 8
@@ -783,15 +763,13 @@ var_width_loop:
 
 %else  ;64-bit
 
-WELS_EXTERN VAACalcSadVar_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadVar_sse2( const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight
 ;               int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8, int32_t *psum16x16, int32_t *psqsum16x16)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadVar_sse2:
+WELS_EXTERN VAACalcSadVar_sse2
 %define         cur_data                        arg1 ;r0
 %define         ref_data                        arg2 ;r1
 %define         iPicWidth                       arg3 ;r2
@@ -813,9 +791,9 @@ VAACalcSadVar_sse2:
   mov r5, arg6  ;psad8x8
 %endif
   mov r14,arg7
-  SIGN_EXTENTION r2,r2d
-  SIGN_EXTENTION r3,r3d
-  SIGN_EXTENTION r4,r4d
+  SIGN_EXTENSION r2,r2d
+  SIGN_EXTENSION r3,r3d
+  SIGN_EXTENSION r4,r4d
 
   mov   r13,r4
   shr   r2,4
@@ -926,15 +904,13 @@ var_width_loop:
 
 %ifdef X86_32
 
-WELS_EXTERN VAACalcSadSsd_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadSsd_sse2(const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight,
 ;       int32_t iPicStride,int32_t *psadframe, int32_t *psad8x8, int32_t *psum16x16, int32_t *psqsum16x16, int32_t *psqdiff16x16)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadSsd_sse2:
+WELS_EXTERN VAACalcSadSsd_sse2
 %define         localsize               12
 %define         cur_data                        esp + pushsize + localsize + 4
 %define         ref_data                        esp + pushsize + localsize + 8
@@ -1082,15 +1058,13 @@ sqdiff_width_loop:
 %else
 
 
-WELS_EXTERN VAACalcSadSsd_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadSsd_sse2(const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight,
 ;       int32_t iPicStride,int32_t *psadframe, int32_t *psad8x8, int32_t *psum16x16, int32_t *psqsum16x16, int32_t *psqdiff16x16)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadSsd_sse2:
+WELS_EXTERN VAACalcSadSsd_sse2
 %define         localsize               12
 %define         cur_data                        arg1;r0
 %define         ref_data                        arg2;r1
@@ -1113,9 +1087,9 @@ VAACalcSadSsd_sse2:
   mov r4,arg5
 %endif
   mov r14,arg7
-  SIGN_EXTENTION r2,r2d
-  SIGN_EXTENTION r3,r3d
-  SIGN_EXTENTION r4,r4d
+  SIGN_EXTENSION r2,r2d
+  SIGN_EXTENSION r3,r3d
+  SIGN_EXTENSION r4,r4d
 
   mov        r13,r4
   shr     r2,4   ; iPicWidth/16
@@ -1246,15 +1220,13 @@ sqdiff_width_loop:
 %endif
 
 %ifdef X86_32
-WELS_EXTERN VAACalcSadBgd_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadBgd_sse2(const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight,
 ;                               int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8, int32_t *p_sd8x8, uint8_t *p_mad8x8)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadBgd_sse2:
+WELS_EXTERN VAACalcSadBgd_sse2
 %define         localsize               12
 %define         cur_data                        esp + pushsize + localsize + 4
 %define         ref_data                        esp + pushsize + localsize + 8
@@ -1425,7 +1397,6 @@ bgd_width_loop:
 
 
 
-WELS_EXTERN VAACalcSadSsdBgd_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadSsdBgd_sse2(const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight,
 ;                int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8, int32_t *psum16x16, int32_t *psqsum16x16,
@@ -1433,8 +1404,7 @@ WELS_EXTERN VAACalcSadSsdBgd_sse2
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadSsdBgd_sse2:
+WELS_EXTERN VAACalcSadSsdBgd_sse2
 %define         localsize               16
 %define         cur_data                        esp + pushsize + localsize + 4
 %define         ref_data                        esp + pushsize + localsize + 8
@@ -1656,15 +1626,13 @@ sqdiff_bgd_width_loop:
    ret
 %else
 
-WELS_EXTERN VAACalcSadBgd_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadBgd_sse2(const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight,
 ;                               int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8, int32_t *p_sd8x8, uint8_t *p_mad8x8)
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadBgd_sse2:
+WELS_EXTERN VAACalcSadBgd_sse2
 %define         cur_data                        arg1;
 %define         ref_data                        arg2;
 %define         iPicWidth                       arg3;
@@ -1685,9 +1653,9 @@ VAACalcSadBgd_sse2:
   ;  mov r5,arg6
 %endif
   mov r14,arg7
-  SIGN_EXTENTION r2,r2d
-  SIGN_EXTENTION r3,r3d
-  SIGN_EXTENTION r4,r4d
+  SIGN_EXTENSION r2,r2d
+  SIGN_EXTENSION r3,r3d
+  SIGN_EXTENSION r4,r4d
 
 
   mov     r13,r4
@@ -1827,7 +1795,6 @@ bgd_width_loop:
 
 
 
-WELS_EXTERN VAACalcSadSsdBgd_sse2
 ;*************************************************************************************************************
 ;void VAACalcSadSsdBgd_sse2(const uint8_t *cur_data, const uint8_t *ref_data, int32_t iPicWidth, int32_t iPicHeight,
 ;                int32_t iPicStride, int32_t *psadframe, int32_t *psad8x8, int32_t *psum16x16, int32_t *psqsum16x16,
@@ -1835,8 +1802,7 @@ WELS_EXTERN VAACalcSadSsdBgd_sse2
 ;*************************************************************************************************************
 
 
-ALIGN 16
-VAACalcSadSsdBgd_sse2:
+WELS_EXTERN VAACalcSadSsdBgd_sse2
 %define         cur_data                        arg1;
 %define         ref_data                        arg2;
 %define         iPicWidth                       arg3;
@@ -1847,13 +1813,8 @@ VAACalcSadSsdBgd_sse2:
 %define         psum16x16                       arg8;
 %define         psqsum16x16                     arg9;
 %define         psqdiff16x16                    arg10;
-%ifdef WIN64
-%define         p_sd8x8                         [rsp + push_num*8 + 88];
-%define         p_mad8x8                        [rsp + push_num*8 + 96];
-%else ;linux
-%define         p_sd8x8                         [rsp + push_num*8 + 40];
-%define         p_mad8x8                        [rsp + push_num*8 + 48];
-%endif
+%define         p_sd8x8                         arg11
+%define         p_mad8x8                        arg12
 
   push r12
   push r13
@@ -1864,9 +1825,9 @@ VAACalcSadSsdBgd_sse2:
   mov r4,arg5
   ;mov r5,arg6
 %endif
-  SIGN_EXTENTION r2,r2d
-  SIGN_EXTENTION r3,r3d
-  SIGN_EXTENTION r4,r4d
+  SIGN_EXTENSION r2,r2d
+  SIGN_EXTENSION r3,r3d
+  SIGN_EXTENSION r4,r4d
 
   mov     r13,r4
   shr             r2,     4                                       ; iPicWidth/16
