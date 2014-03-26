@@ -2499,7 +2499,7 @@ static inline void SetNormalCodingFunc(SWelsFuncPtrList* pFuncList)
 
 void PreprocessSliceCoding (sWelsEncCtx* pCtx) {
   SDqLayer* pCurLayer		= pCtx->pCurDqLayer;
-  const bool kbBaseAvail	= pCurLayer->bBaseLayerAvailableFlag;
+  //const bool kbBaseAvail	= pCurLayer->bBaseLayerAvailableFlag;
   const bool kbHighestSpatialLayer	=
     (pCtx->pSvcParam->iSpatialLayerNum == (pCurLayer->sLayerInfo.sNalHeaderExt.uiDependencyId + 1));
   SWelsFuncPtrList* pFuncList = pCtx->pFuncList;
@@ -2523,6 +2523,8 @@ void PreprocessSliceCoding (sWelsEncCtx* pCtx) {
       pFuncList->pfCalculateSatd = CalculateSatdCost;
       pFuncList->pfInterFineMd = WelsMdInterFinePartition;
     }
+
+
   }
 }
 
