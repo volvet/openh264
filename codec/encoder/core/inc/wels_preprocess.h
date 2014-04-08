@@ -114,22 +114,6 @@ typedef struct SVAAFrameInfoExt_t: public SVAAFrameInfo
   uint8_t    *pVaaBlockStaticIdc[16];//real memory,
 }SVAAFrameInfoExt;
 
-class CWelsLib {
- public:
-  CWelsLib (sWelsEncCtx* pEncCtx);
-  virtual  ~CWelsLib();
-
-  int32_t CreateIface (IWelsVP** ppInterfaceVp);
-  int32_t DestroyIface (IWelsVP* pInterfaceVp);
-
- protected:
-  void* QueryFunction (const char* pName);
-
- private:
-  void* m_pVpLib;
-  void* m_pInterface[2];
-};
-
 class CWelsPreProcess {
  public:
   CWelsPreProcess (sWelsEncCtx* pEncCtx);
@@ -185,14 +169,15 @@ private:
   Scaled_Picture   m_sScaledPicture;
   SPicture*	   m_pLastSpatialPicture[MAX_DEPENDENCY_LAYER][2];
   IWelsVP*         m_pInterfaceVp;
-  CWelsLib*        m_pEncLib;
   sWelsEncCtx*     m_pEncCtx;
   bool             m_bInitDone;
+  uint8_t          m_uiSpatialLayersInTemporal[MAX_DEPENDENCY_LAYER];
+  uint8_t          m_uiSpatialPicNum[MAX_DEPENDENCY_LAYER];
+public:
   /* For Downsampling & VAA I420 based source pictures */
   SPicture*        m_pSpatialPic[MAX_DEPENDENCY_LAYER][MAX_TEMPORAL_LEVEL + 1 +
       LONG_TERM_REF_NUM];	// need memory requirement with total number of (log2(uiGopSize)+1+1+long_term_ref_num)
-  uint8_t          m_uiSpatialLayersInTemporal[MAX_DEPENDENCY_LAYER];
-  uint8_t          m_uiSpatialPicNum[MAX_DEPENDENCY_LAYER];
+
 };
 
 }
