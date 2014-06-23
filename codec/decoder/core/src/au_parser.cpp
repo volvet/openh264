@@ -75,7 +75,7 @@ uint8_t* DetectStartCodePrefix (const uint8_t* kpBuf, int32_t* pOffset, int32_t 
     ++ pBits;
 
     if ((iIdx >= 3) && ((* (pBits - 1)) == 0x1)) {
-      *pOffset = ((uintptr_t)pBits) - ((uintptr_t)kpBuf);
+      *pOffset = (int32_t) (((uintptr_t)pBits) - ((uintptr_t)kpBuf));
       return pBits;
     }
 
@@ -188,12 +188,14 @@ uint8_t* ParseNalHeader (PWelsDecoderContext pCtx, SNalUnitHeader* pNalUnitHeade
 
       PAccessUnit pCurAu	   = pCtx->pAccessUnitList;
       uint32_t uiAvailNalNum = pCurAu->uiAvailUnitsNum;
-      ForceClearCurrentNal (pCurAu);
 
-      if (uiAvailNalNum > 1) {
-        pCurAu->uiEndPos = uiAvailNalNum - 2;
-        pCtx->bAuReadyFlag = true;
+      if (uiAvailNalNum > 0) {
+        pCurAu->uiEndPos = uiAvailNalNum - 1;
+        if (pCtx->iErrorConMethod == ERROR_CON_DISABLE) {
+          pCtx->bAuReadyFlag = true;
+        }
       }
+      pCurNal->sNalData.sPrefixNal.bPrefixNalCorrectFlag = false;
       return NULL;
     }
 
@@ -204,12 +206,14 @@ uint8_t* ParseNalHeader (PWelsDecoderContext pCtx, SNalUnitHeader* pNalUnitHeade
                pCurNal->sNalHeaderExt.uiQualityId, pCurNal->sNalHeaderExt.bUseRefBasePicFlag);
       PAccessUnit pCurAu	   = pCtx->pAccessUnitList;
       uint32_t uiAvailNalNum = pCurAu->uiAvailUnitsNum;
-      ForceClearCurrentNal (pCurAu);
 
-      if (uiAvailNalNum > 1) {
-        pCurAu->uiEndPos = uiAvailNalNum - 2;
-        pCtx->bAuReadyFlag = true;
+      if (uiAvailNalNum > 0) {
+        pCurAu->uiEndPos = uiAvailNalNum - 1;
+        if (pCtx->iErrorConMethod == ERROR_CON_DISABLE) {
+          pCtx->bAuReadyFlag = true;
+        }
       }
+      pCurNal->sNalData.sPrefixNal.bPrefixNalCorrectFlag = false;
       pCtx->iErrorCode |= dsInvalidArgument;
       return NULL;
     }
@@ -229,6 +233,7 @@ uint8_t* ParseNalHeader (PWelsDecoderContext pCtx, SNalUnitHeader* pNalUnitHeade
     InitBits (pBs, pNal, iBitSize);
 
     ParsePrefixNalUnit (pCtx, pBs);
+    pCurNal->sNalData.sPrefixNal.bPrefixNalCorrectFlag = true;
 
     break;
   case NAL_UNIT_CODED_SLICE_EXT:
@@ -291,7 +296,9 @@ uint8_t* ParseNalHeader (PWelsDecoderContext pCtx, SNalUnitHeader* pNalUnitHeade
 
 
       if (NAL_UNIT_PREFIX == pCtx->sPrefixNal.sNalHeaderExt.sNalUnitHeader.eNalUnitType) {
-        PrefetchNalHeaderExtSyntax (pCtx, pCurNal, &pCtx->sPrefixNal);
+        if (pCtx->sPrefixNal.sNalData.sPrefixNal.bPrefixNalCorrectFlag) {
+          PrefetchNalHeaderExtSyntax (pCtx, pCurNal, &pCtx->sPrefixNal);
+        }
       }
 
       pCurNal->sNalHeaderExt.bIdrFlag = (NAL_UNIT_CODED_SLICE_IDR == pNalUnitHeader->eNalUnitType) ? true :
@@ -315,12 +322,16 @@ uint8_t* ParseNalHeader (PWelsDecoderContext pCtx, SNalUnitHeader* pNalUnitHeade
       return NULL;
     }
 
+    if ((uiAvailNalNum == 1) && ((NAL_UNIT_CODED_SLICE_IDR == pNalUnitHeader->eNalUnitType)
+                                 || (pCurNal->sNalHeaderExt.bIdrFlag))) {
+      ResetActiveSPSForEachLayer (pCtx);
+    }
     if ((uiAvailNalNum > 1) &&
-        CheckAccessUnitBoundary (pCurAu->pNalUnitsList[uiAvailNalNum - 1], pCurAu->pNalUnitsList[uiAvailNalNum - 2],
+        CheckAccessUnitBoundary (pCtx, pCurAu->pNalUnitsList[uiAvailNalNum - 1], pCurAu->pNalUnitsList[uiAvailNalNum - 2],
                                  pCurAu->pNalUnitsList[uiAvailNalNum - 1]->sNalData.sVclNal.sSliceHeaderExt.sSliceHeader.pSps)) {
       pCurAu->uiEndPos = uiAvailNalNum - 2;
       pCtx->bAuReadyFlag = true;
-
+      pCtx->bNextNewSeqBegin = CheckNextAuNewSeq (pCtx, pCurNal, pCurNal->sNalData.sVclNal.sSliceHeaderExt.sSliceHeader.pSps);
 
     }
   }
@@ -392,37 +403,33 @@ bool CheckAccessUnitBoundaryExt (PNalUnitHeaderExt pLastNalHdrExt, PNalUnitHeade
 }
 
 
-bool CheckAccessUnitBoundary (const PNalUnit kpCurNal, const PNalUnit kpLastNal, const PSps kpSps) {
+bool CheckAccessUnitBoundary (PWelsDecoderContext pCtx, const PNalUnit kpCurNal, const PNalUnit kpLastNal,
+                              const PSps kpSps) {
   const PNalUnitHeaderExt kpLastNalHeaderExt = &kpLastNal->sNalHeaderExt;
   const PNalUnitHeaderExt kpCurNalHeaderExt = &kpCurNal->sNalHeaderExt;
   const SSliceHeader* kpLastSliceHeader = &kpLastNal->sNalData.sVclNal.sSliceHeaderExt.sSliceHeader;
   const SSliceHeader* kpCurSliceHeader = &kpCurNal->sNalData.sVclNal.sSliceHeaderExt.sSliceHeader;
+  if (pCtx->pActiveLayerSps[kpCurNalHeaderExt->uiDependencyId] != NULL
+      && pCtx->pActiveLayerSps[kpCurNalHeaderExt->uiDependencyId] != kpSps) {
+    return true; // the active sps changed, new sequence begins, so the current au is ready
+  }
 
   //Sub-clause 7.1.4.1.1 temporal_id
   if (kpLastNalHeaderExt->uiTemporalId != kpCurNalHeaderExt->uiTemporalId) {
     return true;
   }
-
+  if (kpLastSliceHeader->iFrameNum != kpCurSliceHeader->iFrameNum)
+    return true;
   // Subclause 7.4.1.2.5
-  if (kpLastSliceHeader->iRedundantPicCnt < kpCurSliceHeader->iRedundantPicCnt)
-    return false;
-  else if (kpLastSliceHeader->iRedundantPicCnt > kpCurSliceHeader->iRedundantPicCnt)
+  if (kpLastSliceHeader->iRedundantPicCnt > kpCurSliceHeader->iRedundantPicCnt)
     return true;
 
   // Subclause G7.4.1.2.4
-  if (kpLastNalHeaderExt->uiDependencyId < kpCurNalHeaderExt->uiDependencyId)
-    return false;
-  else if (kpLastNalHeaderExt->uiDependencyId > kpCurNalHeaderExt->uiDependencyId)
+  if (kpLastNalHeaderExt->uiDependencyId > kpCurNalHeaderExt->uiDependencyId)
     return true;
-  if (kpLastNalHeaderExt->uiQualityId < kpCurNalHeaderExt->uiQualityId)
-    return false;
-  else if (kpLastNalHeaderExt->uiQualityId > kpCurNalHeaderExt->uiQualityId)
-    return true;
-
   // Subclause 7.4.1.2.4
-  if (kpLastSliceHeader->iFrameNum != kpCurSliceHeader->iFrameNum)
-    return true;
-  if (kpLastSliceHeader->iPpsId != kpCurSliceHeader->iPpsId)
+  if (kpLastNalHeaderExt->uiDependencyId == kpCurNalHeaderExt->uiDependencyId
+      && kpLastSliceHeader->iPpsId != kpCurSliceHeader->iPpsId)
     return true;
   if (kpLastSliceHeader->bFieldPicFlag != kpCurSliceHeader->bFieldPicFlag)
     return true;
@@ -448,6 +455,17 @@ bool CheckAccessUnitBoundary (const PNalUnit kpCurNal, const PNalUnit kpLastNal,
     if (kpLastSliceHeader->iDeltaPicOrderCnt[1] != kpCurSliceHeader->iDeltaPicOrderCnt[1])
       return true;
   }
+
+  return false;
+}
+
+bool CheckNextAuNewSeq (PWelsDecoderContext pCtx, const PNalUnit kpCurNal, const PSps kpSps) {
+  const PNalUnitHeaderExt kpCurNalHeaderExt = &kpCurNal->sNalHeaderExt;
+  if (pCtx->pActiveLayerSps[kpCurNalHeaderExt->uiDependencyId] != NULL
+      && pCtx->pActiveLayerSps[kpCurNalHeaderExt->uiDependencyId] != kpSps)
+    return true;
+  if (kpCurNalHeaderExt->bIdrFlag)
+    return true;
 
   return false;
 }
@@ -489,7 +507,8 @@ int32_t ParseNonVclNal (PWelsDecoderContext pCtx, uint8_t* pRbsp, const int32_t 
 #endif
     iErr = ParseSps (pCtx, pBs, &iPicWidth, &iPicHeight);
     if (ERR_NONE != iErr) {	// modified for pSps/pSubsetSps invalid, 12/1/2009
-      pCtx->iErrorCode |= dsNoParamSets;
+      if (pCtx->iErrorConMethod == ERROR_CON_DISABLE)
+        pCtx->iErrorCode |= dsNoParamSets;
       return iErr;
     }
 
@@ -503,7 +522,8 @@ int32_t ParseNonVclNal (PWelsDecoderContext pCtx, uint8_t* pRbsp, const int32_t 
 #endif
     iErr = ParsePps (pCtx, &pCtx->sPpsBuffer[0], pBs);
     if (ERR_NONE != iErr) {	// modified for pps invalid, 12/1/2009
-      pCtx->iErrorCode |= dsNoParamSets;
+      if (pCtx->iErrorConMethod == ERROR_CON_DISABLE)
+        pCtx->iErrorCode |= dsNoParamSets;
       return iErr;
     }
 
@@ -993,6 +1013,9 @@ int32_t ParseSps (PWelsDecoderContext pCtx, PBitStringAux pBsAux, int32_t* pPicW
           pCtx->bAuReadyFlag = true;
           pCtx->pAccessUnitList->uiEndPos = pCtx->pAccessUnitList->uiAvailUnitsNum - 1;
           pCtx->iOverwriteFlags |= OVERWRITE_SUBSETSPS;
+        } else if ((pCtx->pSps != NULL) && (pCtx->pSps->iSpsId == pSubsetSps->sSps.iSpsId)) {
+          memcpy (&pCtx->sSubsetSpsBuffer[MAX_SPS_COUNT], pSubsetSps, sizeof (SSubsetSps));
+          pCtx->iOverwriteFlags |= OVERWRITE_SUBSETSPS;
         } else {
           memcpy (&pCtx->sSubsetSpsBuffer[iSpsId], pSubsetSps, sizeof (SSubsetSps));
         }
@@ -1004,6 +1027,9 @@ int32_t ParseSps (PWelsDecoderContext pCtx, PBitStringAux pBsAux, int32_t* pPicW
           pCtx->iOverwriteFlags |= OVERWRITE_SPS;
           pCtx->bAuReadyFlag = true;
           pCtx->pAccessUnitList->uiEndPos = pCtx->pAccessUnitList->uiAvailUnitsNum - 1;
+        } else if ((pCtx->pSps != NULL) && (pCtx->pSps->iSpsId == pSps->iSpsId)) {
+          memcpy (&pCtx->sSpsBuffer[MAX_SPS_COUNT], pSps, sizeof (SSps));
+          pCtx->iOverwriteFlags |= OVERWRITE_SPS;
         } else {
           memcpy (&pCtx->sSpsBuffer[iSpsId], pSps, sizeof (SSps));
         }

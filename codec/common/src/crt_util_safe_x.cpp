@@ -68,6 +68,8 @@ int32_t WelsSnprintf (char* pBuffer,  int32_t iSizeOfBuffer, const char* kpForma
   va_start (pArgPtr, kpFormat);
 
   iRc = vsnprintf_s (pBuffer, iSizeOfBuffer, _TRUNCATE, kpFormat, pArgPtr);
+  if (iRc < 0)
+    iRc = iSizeOfBuffer;
 
   va_end (pArgPtr);
 
@@ -81,7 +83,10 @@ char* WelsStrncpy (char* pDest, int32_t iSizeInBytes, const char* kpSrc) {
 }
 
 int32_t WelsVsnprintf (char* pBuffer, int32_t iSizeOfBuffer, const char* kpFormat, va_list pArgPtr) {
-  return vsnprintf_s (pBuffer, iSizeOfBuffer, _TRUNCATE, kpFormat, pArgPtr);
+  int32_t iRc = vsnprintf_s (pBuffer, iSizeOfBuffer, _TRUNCATE, kpFormat, pArgPtr);
+  if (iRc < 0)
+    iRc = iSizeOfBuffer;
+  return iRc;
 }
 
 WelsFileHandle* WelsFopen (const char* kpFilename,  const char* kpMode) {
@@ -107,9 +112,9 @@ int32_t WelsStrftime (char* pBuffer, int32_t iSize, const char* kpFormat, const 
 
   localtime_s (&sTimeNow, &kpTp->time);
 
-  iRc = strftime (pBuffer, iSize, kpFormat, &sTimeNow);
+  iRc = (int32_t)strftime (pBuffer, iSize, kpFormat, &sTimeNow);
   if (iRc == 0)
-      pBuffer[0] = '\0';
+    pBuffer[0] = '\0';
   return iRc;
 }
 
@@ -122,8 +127,10 @@ int32_t WelsSnprintf (char* pBuffer,  int32_t iSizeOfBuffer, const char* kpForma
   va_start (pArgPtr, kpFormat);
 
   iRc = vsnprintf (pBuffer, iSizeOfBuffer, kpFormat, pArgPtr); //confirmed_safe_unsafe_usage
-  if (iRc < 0)
+  if (iRc < 0) {
     pBuffer[iSizeOfBuffer - 1] = '\0';
+    iRc = iSizeOfBuffer;
+  }
 
   va_end (pArgPtr);
 
@@ -139,8 +146,10 @@ char* WelsStrncpy (char* pDest, int32_t iSizeInBytes, const char* kpSrc) {
 
 int32_t WelsVsnprintf (char* pBuffer, int32_t iSizeOfBuffer, const char* kpFormat, va_list pArgPtr) {
   int32_t iRc = vsnprintf (pBuffer, iSizeOfBuffer, kpFormat, pArgPtr); //confirmed_safe_unsafe_usage
-  if (iRc < 0)
+  if (iRc < 0) {
     pBuffer[iSizeOfBuffer - 1] = '\0';
+    iRc = iSizeOfBuffer;
+  }
   return iRc;
 }
 
@@ -166,7 +175,7 @@ int32_t WelsStrftime (char* pBuffer, int32_t iSize, const char* kpFormat, const 
 
   iRc = strftime (pBuffer, iSize, kpFormat, pTnow);
   if (iRc == 0)
-      pBuffer[0] = '\0';
+    pBuffer[0] = '\0';
   return iRc;
 }
 
@@ -227,7 +236,7 @@ int32_t WelsStrftime (char* pBuffer, int32_t iSize, const char* kpFormat, const 
 
   iRc = strftime (pBuffer, iSize, kpFormat, pTnow);
   if (iRc == 0)
-      pBuffer[0] = '\0';
+    pBuffer[0] = '\0';
   return iRc;
 }
 
@@ -235,12 +244,12 @@ int32_t WelsStrftime (char* pBuffer, int32_t iSize, const char* kpFormat, const 
 
 
 char* WelsStrcat (char* pDest, int32_t iSizeInBytes, const char* kpSrc) {
-    int32_t iCurLen = strlen(pDest);
-    return WelsStrncpy(pDest + iCurLen, iSizeInBytes - iCurLen, kpSrc);
+  int32_t iCurLen = (int32_t)strlen (pDest);
+  return WelsStrncpy (pDest + iCurLen, iSizeInBytes - iCurLen, kpSrc);
 }
 
 int32_t WelsFwrite (const void* kpBuffer, int32_t iSize, int32_t iCount, WelsFileHandle* pFp) {
-  return fwrite (kpBuffer, iSize, iCount, pFp);
+  return (int32_t)fwrite (kpBuffer, iSize, iCount, pFp);
 }
 
 uint16_t WelsGetMillisecond (const SWelsTime* kpTp) {
@@ -248,7 +257,7 @@ uint16_t WelsGetMillisecond (const SWelsTime* kpTp) {
 }
 
 int32_t WelsFseek (WelsFileHandle* fp, int32_t offset, int32_t origin) {
-  return fseek(fp, offset, origin);
+  return fseek (fp, offset, origin);
 }
 
 int32_t WelsFflush (WelsFileHandle* pFp) {

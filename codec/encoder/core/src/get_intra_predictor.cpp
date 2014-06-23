@@ -441,7 +441,7 @@ void WelsIChormaPredH_c (uint8_t* pPred, uint8_t* pRef, const int32_t kiStride) 
 #ifdef _MSC_VER
     uint64_t kuiSrc64 = (uint64_t) (0x0101010101010101U * kuiLeft);
 #else
-    uint64_t kuiSrc64 = (uint64_t) (0x0101010101010101LL * kuiLeft);
+    uint64_t kuiSrc64 = (uint64_t) (0x0101010101010101ULL * kuiLeft);
 #endif
     ST64 (pPred + iI8x8Stridex7, kuiSrc64);
 
@@ -522,8 +522,8 @@ void WelsIChormaPredDcLeft_c (uint8_t* pPred, uint8_t* pRef, const int32_t kiStr
   const uint64_t kuiTopMean64	= (uint64_t) (0x0101010101010101U * kuiTopMean);
   const uint64_t kuiBottomMean64	= (uint64_t) (0x0101010101010101U * kuiBottomMean);
 #else
-  const uint64_t kuiTopMean64	= (uint64_t) (0x0101010101010101LL * kuiTopMean);
-  const uint64_t kuiBottomMean64	= (uint64_t) (0x0101010101010101LL * kuiBottomMean);
+  const uint64_t kuiTopMean64	= (uint64_t) (0x0101010101010101ULL * kuiTopMean);
+  const uint64_t kuiBottomMean64	= (uint64_t) (0x0101010101010101ULL * kuiBottomMean);
 #endif
   ST64 (pPred   , kuiTopMean64);
   ST64 (pPred + 8 , kuiTopMean64);
@@ -556,7 +556,7 @@ void WelsIChormaPredDcNA_c (uint8_t* pPred, uint8_t* pRef, const int32_t kiStrid
 #ifdef _MSC_VER
   const uint64_t kuiDcValue64 = (uint64_t)0x8080808080808080U;
 #else
-  const uint64_t kuiDcValue64 = (uint64_t)0x8080808080808080LL;
+  const uint64_t kuiDcValue64 = (uint64_t)0x8080808080808080ULL;
 #endif
   ST64 (pPred   , kuiDcValue64);
   ST64 (pPred + 8 , kuiDcValue64);
@@ -594,7 +594,7 @@ void WelsI16x16LumaPredH_c (uint8_t* pPred, uint8_t* pRef, const int32_t kiStrid
 #ifdef _MSC_VER
     const uint64_t kuiV64	= (uint64_t) (0x0101010101010101U * kuiSrc8);
 #else
-    const uint64_t kuiV64	= (uint64_t) (0x0101010101010101LL * kuiSrc8);
+    const uint64_t kuiV64	= (uint64_t) (0x0101010101010101ULL * kuiSrc8);
 #endif
     ST64 (&pPred[iPredStridex15], kuiV64);
     ST64 (&pPred[iPredStridex15 + 8], kuiV64);
@@ -729,8 +729,36 @@ void WelsInitIntraPredFuncs (SWelsFuncPtrList* pFuncList, const uint32_t kuiCpuF
     pFuncList->pfGetChromaPred[C_PRED_V]	= WelsIChromaPredV_neon;
     pFuncList->pfGetChromaPred[C_PRED_P]	= WelsIChromaPredPlane_neon;
     pFuncList->pfGetChromaPred[C_PRED_H]    = WelsIChromaPredH_neon;
-    }
+  }
 #endif
+
+#if defined(HAVE_NEON_AARCH64)
+  if (kuiCpuFlag & WELS_CPU_NEON) {
+    pFuncList->pfGetLumaI16x16Pred[I16_PRED_DC] = WelsI16x16LumaPredDc_AArch64_neon;
+    pFuncList->pfGetLumaI16x16Pred[I16_PRED_P]  = WelsI16x16LumaPredPlane_AArch64_neon;
+    pFuncList->pfGetLumaI16x16Pred[I16_PRED_H]  = WelsI16x16LumaPredH_AArch64_neon;
+    pFuncList->pfGetLumaI16x16Pred[I16_PRED_V]  = WelsI16x16LumaPredV_AArch64_neon;
+    pFuncList->pfGetLumaI16x16Pred[I16_PRED_DC_L]  = WelsI16x16LumaPredDcLeft_AArch64_neon;
+    pFuncList->pfGetLumaI16x16Pred[I16_PRED_DC_T]  = WelsI16x16LumaPredDcTop_AArch64_neon;
+
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_H    ] = WelsI4x4LumaPredH_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_DDL  ] = WelsI4x4LumaPredDDL_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_DDL_TOP] = WelsI4x4LumaPredDDLTop_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_VL   ] = WelsI4x4LumaPredVL_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_VL_TOP ] = WelsI4x4LumaPredVLTop_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_VR   ] = WelsI4x4LumaPredVR_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_HU   ] = WelsI4x4LumaPredHU_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_HD   ] = WelsI4x4LumaPredHD_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_DC   ] = WelsI4x4LumaPredDc_AArch64_neon;
+    pFuncList->pfGetLumaI4x4Pred[I4_PRED_DC_T   ] = WelsI4x4LumaPredDcTop_AArch64_neon;
+
+    pFuncList->pfGetChromaPred[C_PRED_H]       = WelsIChromaPredH_AArch64_neon;
+    pFuncList->pfGetChromaPred[C_PRED_V]       = WelsIChromaPredV_AArch64_neon;
+    pFuncList->pfGetChromaPred[C_PRED_P ]      = WelsIChromaPredPlane_AArch64_neon;
+    pFuncList->pfGetChromaPred[C_PRED_DC]      = WelsIChromaPredDc_AArch64_neon;
+    pFuncList->pfGetChromaPred[C_PRED_DC_T]      = WelsIChromaPredDcTop_AArch64_neon;
+  }
+#endif//HAVE_NEON_AARCH64
 
 #ifdef X86_ASM
   if (kuiCpuFlag & WELS_CPU_MMXEXT) {

@@ -367,11 +367,11 @@ void WelsInitSampleSadFunc (SWelsFuncPtrList* pFuncList, uint32_t uiCpuFlag) {
     pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_8x16 ] = WelsSampleSatd8x16_sse2;
     pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_16x8 ] = WelsSampleSatd16x8_sse2;
     pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_16x16] = WelsSampleSatd16x16_sse2;
-    //pFuncList->sSampleDealingFuncs.pfIntra4x4Combined3Satd = WelsSampleSatdThree4x4_sse2;
+    pFuncList->sSampleDealingFuncs.pfIntra4x4Combined3Satd = WelsSampleSatdThree4x4_sse2;
   }
 
   if (uiCpuFlag & WELS_CPU_SSSE3) {
-    //pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Sad = WelsIntra16x16Combined3Sad_ssse3;
+    pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Sad = WelsIntra16x16Combined3Sad_ssse3;
   }
 
   if (uiCpuFlag & WELS_CPU_SSE41) {
@@ -380,8 +380,8 @@ void WelsInitSampleSadFunc (SWelsFuncPtrList* pFuncList, uint32_t uiCpuFlag) {
     pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_8x16] = WelsSampleSatd8x16_sse41;
     pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_8x8] = WelsSampleSatd8x8_sse41;
     pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_4x4] = WelsSampleSatd4x4_sse41;
-    //pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Satd = WelsIntra16x16Combined3Satd_sse41;
-    //pFuncList->sSampleDealingFuncs.pfIntra8x8Combined3Satd = WelsIntraChroma8x8Combined3Satd_sse41;
+    pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Satd = WelsIntra16x16Combined3Satd_sse41;
+    pFuncList->sSampleDealingFuncs.pfIntra8x8Combined3Satd = WelsIntraChroma8x8Combined3Satd_sse41;
   }
 
 #endif //(X86_ASM)
@@ -411,6 +411,28 @@ void WelsInitSampleSadFunc (SWelsFuncPtrList* pFuncList, uint32_t uiCpuFlag) {
     pFuncList->sSampleDealingFuncs.pfIntra8x8Combined3Sad    = WelsIntra8x8Combined3Sad_neon;
     pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Satd = WelsIntra16x16Combined3Satd_neon;
     pFuncList->sSampleDealingFuncs.pfIntra16x16Combined3Sad  = WelsIntra16x16Combined3Sad_neon;
+  }
+#endif
+
+#if defined (HAVE_NEON_AARCH64)
+  if (uiCpuFlag & WELS_CPU_NEON) {
+    pFuncList->sSampleDealingFuncs.pfSampleSad[BLOCK_4x4  ] = WelsSampleSad4x4_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSad[BLOCK_16x16] = WelsSampleSad16x16_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSad[BLOCK_16x8 ] = WelsSampleSad16x8_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSad[BLOCK_8x16] = WelsSampleSad8x16_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSad[BLOCK_8x8] = WelsSampleSad8x8_AArch64_neon;
+
+    pFuncList->sSampleDealingFuncs.pfSample4Sad[BLOCK_16x16] = WelsSampleSadFour16x16_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSample4Sad[BLOCK_16x8] = WelsSampleSadFour16x8_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSample4Sad[BLOCK_8x16] = WelsSampleSadFour8x16_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSample4Sad[BLOCK_8x8] = WelsSampleSadFour8x8_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSample4Sad[BLOCK_4x4] = WelsSampleSadFour4x4_AArch64_neon;
+
+    pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_4x4  ] = WelsSampleSatd4x4_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_8x8  ] = WelsSampleSatd8x8_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_8x16 ] = WelsSampleSatd8x16_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_16x8 ] = WelsSampleSatd16x8_AArch64_neon;
+    pFuncList->sSampleDealingFuncs.pfSampleSatd[BLOCK_16x16] = WelsSampleSatd16x16_AArch64_neon;
   }
 #endif
 }

@@ -9,7 +9,6 @@ DECODER_CPP_SRCS=\
 	$(DECODER_SRCDIR)/core/src/decoder_core.cpp\
 	$(DECODER_SRCDIR)/core/src/decoder_data_tables.cpp\
 	$(DECODER_SRCDIR)/core/src/error_concealment.cpp\
-	$(DECODER_SRCDIR)/core/src/expand_pic.cpp\
 	$(DECODER_SRCDIR)/core/src/fmo.cpp\
 	$(DECODER_SRCDIR)/core/src/get_intra_predictor.cpp\
 	$(DECODER_SRCDIR)/core/src/manage_dec_ref.cpp\
@@ -20,8 +19,6 @@ DECODER_CPP_SRCS=\
 	$(DECODER_SRCDIR)/core/src/parse_mb_syn_cavlc.cpp\
 	$(DECODER_SRCDIR)/core/src/pic_queue.cpp\
 	$(DECODER_SRCDIR)/core/src/rec_mb.cpp\
-	$(DECODER_SRCDIR)/core/src/utils.cpp\
-	$(DECODER_SRCDIR)/plus/src/welsCodecTrace.cpp\
 	$(DECODER_SRCDIR)/plus/src/welsDecoderExt.cpp\
 
 DECODER_OBJS += $(DECODER_CPP_SRCS:.cpp=.$(OBJ))
@@ -35,11 +32,18 @@ DECODER_OBJS += $(DECODER_ASM_SRCS:.asm=.$(OBJ))
 endif
 
 ifeq ($(ASM_ARCH), arm)
-DECODER_ASM_S_SRCS=\
+DECODER_ASM_ARM_SRCS=\
 	$(DECODER_SRCDIR)/core/arm/block_add_neon.S\
 	$(DECODER_SRCDIR)/core/arm/intra_pred_neon.S\
 
-DECODER_OBJS += $(DECODER_ASM_S_SRCS:.S=.$(OBJ))
+DECODER_OBJS += $(DECODER_ASM_ARM_SRCS:.S=.$(OBJ))
+endif
+
+ifeq ($(ASM_ARCH), arm64)
+DECODER_ASM_ARM64_SRCS=\
+	$(DECODER_SRCDIR)/core/arm64/intra_pred_aarch64_neon.S\
+
+DECODER_OBJS += $(DECODER_ASM_ARM64_SRCS:.S=.$(OBJ))
 endif
 
 OBJS += $(DECODER_OBJS)
@@ -50,7 +54,7 @@ $(DECODER_SRCDIR)/%.$(OBJ): $(DECODER_SRCDIR)/%.asm
 	$(QUIET_ASM)$(ASM) $(ASMFLAGS) $(ASM_INCLUDES) $(DECODER_ASMFLAGS) $(DECODER_ASM_INCLUDES) -o $@ $<
 
 $(DECODER_SRCDIR)/%.$(OBJ): $(DECODER_SRCDIR)/%.S
-	$(QUIET_CCAS)$(CCAS) $(CFLAGS) $(ASMFLAGS) $(INCLUDES) $(DECODER_CFLAGS) $(DECODER_INCLUDES) -c -o $@ $<
+	$(QUIET_CCAS)$(CCAS) $(CCASFLAGS) $(ASMFLAGS) $(INCLUDES) $(DECODER_CFLAGS) $(DECODER_INCLUDES) -c -o $@ $<
 
 $(LIBPREFIX)decoder.$(LIBSUFFIX): $(DECODER_OBJS)
 	$(QUIET)rm -f $@

@@ -153,6 +153,7 @@ void WelsInitBGDFunc (SWelsFuncPtrList* pFuncList, const bool kbEnableBackground
  */
 int32_t InitFunctionPointers (SWelsFuncPtrList* pFuncList, SWelsSvcCodingParam* pParam, uint32_t uiCpuFlag) {
   int32_t iReturn = ENC_RETURN_SUCCESS;
+  bool bScreenContent = (SCREEN_CONTENT_REAL_TIME == pParam->iUsageType);
 
   /* Functionality utilization of CPU instructions dependency */
   pFuncList->pfSetMemZeroSize8	= WelsSetMemZero_c;		// confirmed_safe_unsafe_usage
@@ -177,20 +178,22 @@ int32_t InitFunctionPointers (SWelsFuncPtrList* pFuncList, SWelsSvcCodingParam* 
   }
 #endif
 
-  InitExpandPictureFunc (pFuncList, uiCpuFlag);
+  InitExpandPictureFunc (& (pFuncList->sExpandPicFunc), uiCpuFlag);
 
   /* Intra_Prediction_fn*/
   WelsInitFillingPredFuncs (uiCpuFlag);
   WelsInitIntraPredFuncs (pFuncList, uiCpuFlag);
 
   /* ME func */
-  WelsInitMeFunc (pFuncList, uiCpuFlag, SCREEN_CONTENT_REAL_TIME == pParam->iUsageType);
+  WelsInitMeFunc (pFuncList, uiCpuFlag, bScreenContent);
 
   /* sad, satd, average */
   WelsInitSampleSadFunc (pFuncList, uiCpuFlag);
 
   //
   WelsInitBGDFunc (pFuncList, pParam->bEnableBackgroundDetection);
+  WelsInitSCDPskipFunc (pFuncList, bScreenContent && (pParam->bEnableSceneChangeDetect));
+
   // for pfGetVarianceFromIntraVaa function ptr adaptive by CPU features, 6/7/2010
   InitIntraAnalysisVaaInfo (pFuncList, uiCpuFlag);
 
@@ -292,7 +295,6 @@ EVideoFrameType DecideFrameType (sWelsEncCtx* pEncCtx, const int8_t kiSpatialNum
     } else {
       bSceneChangeFlag = pEncCtx->pVaa->bSceneChangeFlag;
     }
-    pEncCtx->bCurFrameMarkedAsSceneLtr   = false;
     if (pEncCtx->pVaa->bIdrPeriodFlag || pEncCtx->bEncCurFrmAsIdrFlag || (!pSvcParam->bEnableLongTermReference
         && bSceneChangeFlag)) {
       iFrameType = videoFrameTypeIDR;

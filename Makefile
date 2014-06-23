@@ -14,6 +14,15 @@ V=Yes
 PREFIX=/usr/local
 SHARED=-shared
 OBJ=o
+PROJECT_NAME=openh264
+MODULE_NAME=gmpopenh264
+CCASFLAGS=$(CFLAGS)
+
+ifeq (,$(wildcard ./gmp-api))
+HAVE_GMP_API=No
+else
+HAVE_GMP_API=Yes
+endif
 
 ifeq (,$(wildcard ./gtest))
 HAVE_GTEST=No
@@ -70,7 +79,8 @@ ENCODER_INCLUDES = \
 
 PROCESSING_INCLUDES = \
     -Icodec/processing/interface \
-    -Icodec/processing/src/common
+    -Icodec/processing/src/common \
+    -Icodec/processing/src/scrolldetection
 
 GTEST_INCLUDES += \
     -Igtest \
@@ -92,20 +102,36 @@ CODEC_UNITTEST_LDFLAGS = -L. $(call LINK_LIB,gtest) $(call LINK_LIB,decoder) $(c
 CODEC_UNITTEST_DEPS = $(LIBPREFIX)gtest.$(LIBSUFFIX) $(LIBPREFIX)decoder.$(LIBSUFFIX) $(LIBPREFIX)encoder.$(LIBSUFFIX) $(LIBPREFIX)processing.$(LIBSUFFIX) $(LIBPREFIX)common.$(LIBSUFFIX)
 DECODER_UNITTEST_INCLUDES = $(CODEC_UNITTEST_INCLUDES) $(DECODER_INCLUDES) -Itest -Itest/decoder
 ENCODER_UNITTEST_INCLUDES = $(CODEC_UNITTEST_INCLUDES) $(ENCODER_INCLUDES) -Itest -Itest/encoder
+PROCESSING_UNITTEST_INCLUDES = $(CODEC_UNITTEST_INCLUDES) $(PROCESSING_INCLUDES) -Itest -Itest/processing
 API_TEST_INCLUDES = $(CODEC_UNITTEST_INCLUDES) -Itest -Itest/api
+COMMON_UNITTEST_INCLUDES = $(CODEC_UNITTEST_INCLUDES) $(DECODER_INCLUDES) -Itest -Itest/common
+MODULE_INCLUDES = -Igmp-api
+
 .PHONY: test gtest-bootstrap clean
 
 all:	libraries binaries
 
 clean:
+ifeq (android,$(OS))
+clean: clean_Android
+endif
 	$(QUIET)rm -f $(OBJS) $(OBJS:.$(OBJ)=.d) $(LIBRARIES) $(BINARIES)
+
+gmp-bootstrap:
+	git clone https://github.com/mozilla/gmp-api gmp-api
 
 gtest-bootstrap:
 	svn co https://googletest.googlecode.com/svn/trunk/ gtest
 
 ifeq ($(HAVE_GTEST),Yes)
+
 test: codec_unittest$(EXEEXT)
+ifneq (android,$(OS))
+ifneq (ios,$(OS))
 	./codec_unittest
+endif
+endif
+
 else
 test:
 	@echo "./gtest : No such file or directory."
@@ -117,6 +143,10 @@ include codec/decoder/targets.mk
 include codec/encoder/targets.mk
 include codec/processing/targets.mk
 
+ifeq ($(HAVE_GMP_API),Yes)
+include module/targets.mk
+endif
+
 ifneq (android, $(OS))
 ifneq (ios, $(OS))
 include codec/console/dec/targets.mk
@@ -124,14 +154,32 @@ include codec/console/enc/targets.mk
 endif
 endif
 
-libraries: $(LIBPREFIX)wels.$(LIBSUFFIX) $(LIBPREFIX)wels.$(SHAREDLIBSUFFIX)
-LIBRARIES += $(LIBPREFIX)wels.$(LIBSUFFIX) $(LIBPREFIX)wels.$(SHAREDLIBSUFFIX)
+ifneq (ios, $(OS))
+libraries: $(LIBPREFIX)$(PROJECT_NAME).$(LIBSUFFIX) $(LIBPREFIX)$(PROJECT_NAME).$(SHAREDLIBSUFFIX)
+else
+libraries: $(LIBPREFIX)$(PROJECT_NAME).$(LIBSUFFIX)
+endif
 
-$(LIBPREFIX)wels.$(LIBSUFFIX): $(ENCODER_OBJS) $(DECODER_OBJS) $(PROCESSING_OBJS) $(COMMON_OBJS)
+LIBRARIES += $(LIBPREFIX)$(PROJECT_NAME).$(LIBSUFFIX) $(LIBPREFIX)$(PROJECT_NAME).$(SHAREDLIBSUFFIX)
+
+$(LIBPREFIX)$(PROJECT_NAME).$(LIBSUFFIX): $(ENCODER_OBJS) $(DECODER_OBJS) $(PROCESSING_OBJS) $(COMMON_OBJS)
 	$(QUIET)rm -f $@
 	$(QUIET_AR)$(AR) $(AR_OPTS) $+
 
-$(LIBPREFIX)wels.$(SHAREDLIBSUFFIX): $(ENCODER_OBJS) $(DECODER_OBJS) $(PROCESSING_OBJS) $(COMMON_OBJS)
+$(LIBPREFIX)$(PROJECT_NAME).$(SHAREDLIBSUFFIX): $(ENCODER_OBJS) $(DECODER_OBJS) $(PROCESSING_OBJS) $(COMMON_OBJS)
+	$(QUIET)rm -f $@
+	$(QUIET_CXX)$(CXX) $(SHARED) $(LDFLAGS) $(CXX_LINK_O) $+ $(SHLDFLAGS)
+
+ifeq ($(HAVE_GMP_API),Yes)
+plugin: $(LIBPREFIX)$(MODULE_NAME).$(SHAREDLIBSUFFIX)
+PLUGINS += $(LIBPREFIX)$(MODULE_NAME).$(SHAREDLIBSUFFIX)
+else
+plugin:
+	@echo "./gmp-api : No such file or directory."
+	@echo "You do not have gmp-api.  Run make gmp-bootstrap to get the gmp-api headers."
+endif
+
+$(LIBPREFIX)$(MODULE_NAME).$(SHAREDLIBSUFFIX): $(MODULE_OBJS) $(ENCODER_OBJS) $(DECODER_OBJS) $(PROCESSING_OBJS) $(COMMON_OBJS)
 	$(QUIET)rm -f $@
 	$(QUIET_CXX)$(CXX) $(SHARED) $(LDFLAGS) $(CXX_LINK_O) $+ $(SHLDFLAGS)
 
@@ -139,13 +187,13 @@ install-headers:
 	mkdir -p $(PREFIX)/include/wels
 	install -m 644 codec/api/svc/codec*.h $(PREFIX)/include/wels
 
-install-static: $(LIBPREFIX)wels.$(LIBSUFFIX) install-headers
+install-static: $(LIBPREFIX)$(PROJECT_NAME).$(LIBSUFFIX) install-headers
 	mkdir -p $(PREFIX)/lib
-	install -m 644 $(LIBPREFIX)wels.$(LIBSUFFIX) $(PREFIX)/lib
+	install -m 644 $(LIBPREFIX)$(PROJECT_NAME).$(LIBSUFFIX) $(PREFIX)/lib
 
-install-shared: $(LIBPREFIX)wels.$(SHAREDLIBSUFFIX) install-headers
+install-shared: $(LIBPREFIX)$(PROJECT_NAME).$(SHAREDLIBSUFFIX) install-headers
 	mkdir -p $(PREFIX)/lib
-	install -m 755 $(LIBPREFIX)wels.$(SHAREDLIBSUFFIX) $(PREFIX)/lib
+	install -m 755 $(LIBPREFIX)$(PROJECT_NAME).$(SHAREDLIBSUFFIX) $(PREFIX)/lib
 ifneq ($(EXTRA_LIBRARY),)
 	install -m 644 $(EXTRA_LIBRARY) $(PREFIX)/lib
 endif
@@ -158,11 +206,46 @@ include build/gtest-targets.mk
 include test/api/targets.mk
 include test/decoder/targets.mk
 include test/encoder/targets.mk
+include test/processing/targets.mk
+include test/common/targets.mk
+
+LIBRARIES += $(LIBPREFIX)ut.$(LIBSUFFIX)
+$(LIBPREFIX)ut.$(LIBSUFFIX): $(DECODER_UNITTEST_OBJS) $(ENCODER_UNITTEST_OBJS) $(PROCESSING_UNITTEST_OBJS) $(COMMON_UNITTEST_OBJS) $(API_TEST_OBJS)
+	$(QUIET)rm -f $@
+	$(QUIET_AR)$(AR) $(AR_OPTS) $+
+
+
+LIBRARIES +=$(LIBPREFIX)ut.$(SHAREDLIBSUFFIX)
+$(LIBPREFIX)ut.$(SHAREDLIBSUFFIX): $(DECODER_UNITTEST_OBJS) $(ENCODER_UNITTEST_OBJS) $(PROCESSING_UNITTEST_OBJS) $(API_TEST_OBJS) $(COMMON_UNITTEST_OBJS)  $(CODEC_UNITTEST_DEPS)
+	$(QUIET)rm -f $@
+	$(QUIET_CXX)$(CXX) $(SHARED) $(LDFLAGS) $(CXX_LINK_O) $+ $(CODEC_UNITTEST_LDFLAGS)
+
 binaries: codec_unittest$(EXEEXT)
 BINARIES += codec_unittest$(EXEEXT)
-codec_unittest$(EXEEXT): $(DECODER_UNITTEST_OBJS) $(ENCODER_UNITTEST_OBJS) $(API_TEST_OBJS) $(CODEC_UNITTEST_DEPS)
+
+ifeq (ios,$(OS))
+codec_unittest$(EXEEXT): $(LIBPREFIX)ut.$(LIBSUFFIX) $(LIBPREFIX)gtest.$(LIBSUFFIX) $(LIBPREFIX)$(PROJECT_NAME).$(LIBSUFFIX)
+
+else
+ifeq (android,$(OS))
+codec_unittest$(EXEEXT): $(LIBPREFIX)ut.$(SHAREDLIBSUFFIX)
+	cd ./test/build/android && $(NDKROOT)/ndk-build -B APP_ABI=$(APP_ABI) && android update project -t $(TARGET) -p . && ant debug
+
+clean_Android: clean_Android_ut
+clean_Android_ut:
+	cd ./test/build/android && $(NDKROOT)/ndk-build APP_ABI=$(APP_ABI) clean && ant clean
+
+else
+codec_unittest$(EXEEXT): $(DECODER_UNITTEST_OBJS) $(ENCODER_UNITTEST_OBJS) $(PROCESSING_UNITTEST_OBJS) $(API_TEST_OBJS) $(COMMON_UNITTEST_OBJS) $(CODEC_UNITTEST_DEPS)
 	$(QUIET)rm -f $@
 	$(QUIET_CXX)$(CXX) $(CXX_LINK_O) $+ $(CODEC_UNITTEST_LDFLAGS) $(LDFLAGS)
+
+endif
+endif
+
+else
+binaries:
+	@:
 endif
 
 -include $(OBJS:.$(OBJ)=.d)
