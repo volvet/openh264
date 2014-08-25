@@ -1,7 +1,5 @@
-#include<gtest/gtest.h>
-#include<math.h>
-#include<stdlib.h>
-#include<time.h>
+#include <gtest/gtest.h>
+#include <math.h>
 
 #include "cpu_core.h"
 #include "cpu.h"
@@ -9,142 +7,124 @@
 #include "sad_common.h"
 #include "get_intra_predictor.h"
 
-using namespace WelsSVCEnc;
+using namespace WelsEnc;
+
+#define GENERATE_Intra16x16_UT(func, ref, ASM, CPUFLAGS) \
+TEST (IntraSadSatdFuncTest, func) { \
+  const int32_t iLineSizeDec = 32; \
+  const int32_t iLineSizeEnc = 32; \
+  int32_t tmpa, tmpb; \
+  int32_t iBestMode_c, iBestMode_a, iLambda = 50; \
+  if (ASM) {\
+    int32_t iCpuCores = 0; \
+    uint32_t m_uiCpuFeatureFlag = WelsCPUFeatureDetect (&iCpuCores); \
+    if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+      return; \
+  } \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pDec, iLineSizeDec << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pEnc, iLineSizeEnc << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pDst, 512, 16); \
+  for (int i = 0; i < (iLineSizeDec << 5); i++) \
+    pDec[i] = rand() % 256; \
+  for (int i = 0; i < (iLineSizeEnc << 5); i++) \
+    pEnc[i] = rand() % 256; \
+  for (int i = 0; i < 512; i++) \
+    pDst[i] = rand() % 256; \
+  tmpa = ref (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, &iBestMode_c, iLambda, pDst); \
+  tmpb = func (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, &iBestMode_a, iLambda, pDst); \
+  ASSERT_EQ (tmpa, tmpb); \
+  ASSERT_EQ (iBestMode_c, iBestMode_a); \
+}
+
+#define GENERATE_Intra4x4_UT(func, ASM, CPUFLAGS) \
+TEST (IntraSadSatdFuncTest, func) { \
+  const int32_t iLineSizeDec = 32; \
+  const int32_t iLineSizeEnc = 32; \
+  int32_t tmpa, tmpb; \
+  int32_t iBestMode_c, iBestMode_a, iLambda = 50; \
+  int32_t lambda[2]						= {iLambda << 2, iLambda}; \
+  int32_t iPredMode = rand() % 3; \
+  if (ASM) {\
+    int32_t iCpuCores = 0; \
+    uint32_t m_uiCpuFeatureFlag = WelsCPUFeatureDetect (&iCpuCores); \
+    if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+     return; \
+  } \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pDec, iLineSizeDec << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pEnc, iLineSizeEnc << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pDst, 512, 16); \
+  for (int i = 0; i < (iLineSizeDec << 5); i++) \
+    pDec[i] = rand() % 256; \
+  for (int i = 0; i < (iLineSizeEnc << 5); i++) \
+    pEnc[i] = rand() % 256; \
+  for (int i = 0; i < 512; i++) \
+    pDst[i] = rand() % 256; \
+  tmpa = WelsSampleSatdIntra4x4Combined3_c (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, pDst, &iBestMode_c, \
+         lambda[iPredMode == 2], lambda[iPredMode == 1], lambda[iPredMode == 0]); \
+  tmpb = func (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, pDst, &iBestMode_a, \
+                                      lambda[iPredMode == 2], lambda[iPredMode == 1], lambda[iPredMode == 0]); \
+  ASSERT_EQ (tmpa, tmpb); \
+  ASSERT_EQ (iBestMode_c, iBestMode_a); \
+}
+
+#define GENERATE_Intra8x8_UT(func, ref, ASM, CPUFLAGS) \
+TEST (IntraSadSatdFuncTest, func) { \
+  const int32_t iLineSizeDec = 32; \
+  const int32_t iLineSizeEnc = 32; \
+  int32_t tmpa, tmpb; \
+  int32_t iBestMode_c, iBestMode_a, iLambda = 50; \
+  if (ASM) {\
+    int32_t iCpuCores = 0; \
+    uint32_t m_uiCpuFeatureFlag = WelsCPUFeatureDetect (&iCpuCores); \
+    if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+        return; \
+  } \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pDecCb, iLineSizeDec << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pEncCb, iLineSizeEnc << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pDecCr, iLineSizeDec << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pEncCr, iLineSizeEnc << 5, 16); \
+  ENFORCE_STACK_ALIGN_1D (uint8_t, pDstChma, 512, 16); \
+  for (int i = 0; i < (iLineSizeDec << 5); i++) { \
+    pDecCb[i] = rand() % 256; \
+    pDecCr[i] = rand() % 256; \
+  } \
+  for (int i = 0; i < (iLineSizeEnc << 5); i++) { \
+    pEncCb[i] = rand() % 256; \
+    pEncCr[i] = rand() % 256; \
+  } \
+  for (int i = 0; i < 512; i++) \
+    pDstChma[i] = rand() % 256; \
+  tmpa = ref (pDecCb + 128, iLineSizeDec, pEncCb, iLineSizeEnc, &iBestMode_c, iLambda, \
+         pDstChma, pDecCr + 128, pEncCr); \
+  tmpb = func (pDecCb + 128, iLineSizeDec, pEncCb, iLineSizeEnc, &iBestMode_a, iLambda, \
+         pDstChma, pDecCr + 128, pEncCr); \
+  ASSERT_EQ (tmpa, tmpb); \
+  ASSERT_EQ (iBestMode_c, iBestMode_a); \
+}
+
 #ifdef X86_ASM
-TEST (IntraSadSatdFuncTest, WelsIntra16x16Combined3Sad_ssse3) {
-  const int32_t iLineSizeDec = 32;
-  const int32_t iLineSizeEnc = 32;
-  int32_t tmpa, tmpb;
-  int32_t iBestMode_c, iBestMode_a, iLambda = 50;
-  CMemoryAlign cMemoryAlign (0);
-  int32_t iCpuCores = 0;
-  uint32_t m_uiCpuFeatureFlag = WelsCPUFeatureDetect (&iCpuCores);
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSSE3))
-    return;
-  uint8_t* pDec = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeDec << 5, "pDec");
-  uint8_t* pEnc = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeEnc << 5, "pEnc");
-  uint8_t* pDst = (uint8_t*)cMemoryAlign.WelsMalloc (512, "pDst");
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (iLineSizeDec << 5); i++)
-    pDec[i] = rand() % 256;
-  for (int i = 0; i < (iLineSizeEnc << 5); i++)
-    pEnc[i] = rand() % 256;
-
-  for (int i = 0; i < 512; i++)
-    pDst[i] = rand() % 256;
-  tmpa = WelsSampleSadIntra16x16Combined3_c (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, &iBestMode_c, iLambda, pDst);
-  tmpb = WelsIntra16x16Combined3Sad_ssse3 (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, &iBestMode_a, iLambda, pDst);
-
-  ASSERT_EQ (tmpa, tmpb);
-  ASSERT_EQ (iBestMode_c, iBestMode_a);
-
-  cMemoryAlign.WelsFree (pDec, "pDec");
-  cMemoryAlign.WelsFree (pEnc, "pEnc");
-  cMemoryAlign.WelsFree (pDst, "pDst");
-}
-
-TEST (IntraSadSatdFuncTest, WelsIntra16x16Combined3Satd_sse41) {
-  const int32_t iLineSizeDec = 32;
-  const int32_t iLineSizeEnc = 32;
-  int32_t tmpa, tmpb;
-  int32_t iBestMode_c, iBestMode_a, iLambda = 50;
-  CMemoryAlign cMemoryAlign (0);
-  int32_t iCpuCores = 0;
-  uint32_t m_uiCpuFeatureFlag = WelsCPUFeatureDetect (&iCpuCores);
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE41))
-    return;
-  uint8_t* pDec = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeDec << 5, "pDec");
-  uint8_t* pEnc = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeEnc << 5, "pEnc");
-  uint8_t* pDst = (uint8_t*)cMemoryAlign.WelsMalloc (512, "pDst");
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (iLineSizeDec << 5); i++)
-    pDec[i] = rand() % 256;
-  for (int i = 0; i < (iLineSizeEnc << 5); i++)
-    pEnc[i] = rand() % 256;
-  for (int i = 0; i < 512; i++)
-    pDst[i] = rand() % 256;
-  tmpa = WelsSampleSatdIntra16x16Combined3_c (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, &iBestMode_c, iLambda, pDst);
-  tmpb = WelsIntra16x16Combined3Satd_sse41 (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, &iBestMode_a, iLambda, pDst);
-  ASSERT_EQ (tmpa, tmpb);
-  ASSERT_EQ (iBestMode_c, iBestMode_a);
-  cMemoryAlign.WelsFree (pDec, "pDec");
-  cMemoryAlign.WelsFree (pEnc, "pEnc");
-  cMemoryAlign.WelsFree (pDst, "pDst");
-}
-
-TEST (IntraSadSatdFuncTest, WelsSampleSatdThree4x4_sse2) {
-  const int32_t iLineSizeDec = 32;
-  const int32_t iLineSizeEnc = 32;
-  int32_t tmpa, tmpb;
-  int32_t iBestMode_c, iBestMode_a, iLambda = 50;
-  int32_t lambda[2]						= {iLambda << 2, iLambda};
-  int32_t iPredMode = rand() % 3;
-  CMemoryAlign cMemoryAlign (0);
-  int32_t iCpuCores = 0;
-  uint32_t m_uiCpuFeatureFlag = WelsCPUFeatureDetect (&iCpuCores);
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  uint8_t* pDec = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeDec << 5, "pDec");
-  uint8_t* pEnc = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeEnc << 5, "pEnc");
-  uint8_t* pDst = (uint8_t*)cMemoryAlign.WelsMalloc (512, "pDst");
-  WelsInitFillingPredFuncs (WELS_CPU_SSE2);
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (iLineSizeDec << 5); i++)
-    pDec[i] = rand() % 256;
-  for (int i = 0; i < (iLineSizeEnc << 5); i++)
-    pEnc[i] = rand() % 256;
-  for (int i = 0; i < 512; i++)
-    pDst[i] = rand() % 256;
-  tmpa = WelsSampleSatdIntra4x4Combined3_c (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, pDst, &iBestMode_c,
-         lambda[iPredMode == 2], lambda[iPredMode == 1], lambda[iPredMode == 0]);
-  tmpb = WelsSampleSatdThree4x4_sse2 (pDec + 128, iLineSizeDec, pEnc, iLineSizeEnc, pDst, &iBestMode_a,
-                                      lambda[iPredMode == 2], lambda[iPredMode == 1], lambda[iPredMode == 0]);
-  ASSERT_EQ (tmpa, tmpb);
-  ASSERT_EQ (iBestMode_c, iBestMode_a);
-  cMemoryAlign.WelsFree (pDec, "pDec");
-  cMemoryAlign.WelsFree (pEnc, "pEnc");
-  cMemoryAlign.WelsFree (pDst, "pDst");
-}
-
-TEST (IntraSadSatdFuncTest, WelsIntraChroma8x8Combined3Satd_sse41) {
-  const int32_t iLineSizeDec = 32;
-  const int32_t iLineSizeEnc = 32;
-  int32_t tmpa, tmpb;
-  int32_t iBestMode_c, iBestMode_a, iLambda = 50;
-  CMemoryAlign cMemoryAlign (0);
-  int32_t iCpuCores = 0;
-  uint32_t m_uiCpuFeatureFlag = WelsCPUFeatureDetect (&iCpuCores);
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE41))
-    return;
-  uint8_t* pDecCb = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeDec << 5, "pDecCb");
-  uint8_t* pEncCb = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeEnc << 5, "pEncCb");
-  uint8_t* pDecCr = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeDec << 5, "pDecCr");
-  uint8_t* pEncCr = (uint8_t*)cMemoryAlign.WelsMalloc (iLineSizeEnc << 5, "pEncCr");
-  uint8_t* pDstChma = (uint8_t*)cMemoryAlign.WelsMalloc (512, "pDstChma");
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (iLineSizeDec << 5); i++) {
-    pDecCb[i] = rand() % 256;
-    pDecCr[i] = rand() % 256;
-  }
-  for (int i = 0; i < (iLineSizeEnc << 5); i++) {
-    pEncCb[i] = rand() % 256;
-    pEncCr[i] = rand() % 256;
-  }
-  for (int i = 0; i < 512; i++)
-    pDstChma[i] = rand() % 256;
-  tmpa = WelsSampleSatdIntra8x8Combined3_c (pDecCb + 128, iLineSizeDec, pEncCb, iLineSizeEnc, &iBestMode_c, iLambda,
-         pDstChma, pDecCr + 128, pEncCr);
-  tmpb = WelsIntraChroma8x8Combined3Satd_sse41 (pDecCb + 128, iLineSizeDec, pEncCb, iLineSizeEnc, &iBestMode_a, iLambda,
-         pDstChma, pDecCr + 128, pEncCr);
-  ASSERT_EQ (tmpa, tmpb);
-  ASSERT_EQ (iBestMode_c, iBestMode_a);
-  cMemoryAlign.WelsFree (pDecCb, "pDecCb");
-  cMemoryAlign.WelsFree (pEncCb, "pEncCb");
-  cMemoryAlign.WelsFree (pDecCr, "pDecCr");
-  cMemoryAlign.WelsFree (pEncCr, "pEncCr");
-  cMemoryAlign.WelsFree (pDstChma, "pDstChma");
-}
+GENERATE_Intra16x16_UT(WelsIntra16x16Combined3Sad_ssse3, WelsSampleSadIntra16x16Combined3_c, 1, WELS_CPU_SSSE3)
+GENERATE_Intra16x16_UT(WelsIntra16x16Combined3Satd_sse41, WelsSampleSatdIntra16x16Combined3_c, 1, WELS_CPU_SSE41)
+GENERATE_Intra8x8_UT(WelsIntraChroma8x8Combined3Satd_sse41, WelsSampleSatdIntra8x8Combined3_c, 1, WELS_CPU_SSE41)
+GENERATE_Intra4x4_UT(WelsSampleSatdThree4x4_sse2, 1, WELS_CPU_SSE2)
 #endif
+
+#ifdef HAVE_NEON
+GENERATE_Intra16x16_UT(WelsIntra16x16Combined3Sad_neon, WelsSampleSadIntra16x16Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra16x16_UT(WelsIntra16x16Combined3Satd_neon, WelsSampleSatdIntra16x16Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra8x8_UT(WelsIntra8x8Combined3Satd_neon, WelsSampleSatdIntra8x8Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra8x8_UT(WelsIntra8x8Combined3Sad_neon, WelsSampleSadIntra8x8Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra4x4_UT(WelsIntra4x4Combined3Satd_neon, 1, WELS_CPU_NEON)
+#endif
+
+#ifdef HAVE_NEON_AARCH64
+GENERATE_Intra16x16_UT(WelsIntra16x16Combined3Sad_AArch64_neon, WelsSampleSadIntra16x16Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra16x16_UT(WelsIntra16x16Combined3Satd_AArch64_neon, WelsSampleSatdIntra16x16Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra8x8_UT(WelsIntra8x8Combined3Satd_AArch64_neon, WelsSampleSatdIntra8x8Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra8x8_UT(WelsIntra8x8Combined3Sad_AArch64_neon, WelsSampleSadIntra8x8Combined3_c, 1, WELS_CPU_NEON)
+GENERATE_Intra4x4_UT(WelsIntra4x4Combined3Satd_AArch64_neon, 1, WELS_CPU_NEON)
+#endif
+
 #define ASSERT_MEMORY_FAIL2X(A, B)     \
   if (NULL == B) {                     \
     pMemAlign->WelsFree(A, "Sad_SrcA");\
@@ -165,7 +145,6 @@ class SadSatdCFuncTest : public testing::Test {
   virtual void SetUp() {
     pMemAlign = new CMemoryAlign (0);
 
-    srand ((uint32_t)time (NULL));
     m_iStrideA = rand() % 256 + PIXEL_STRIDE;
     m_iStrideB = rand() % 256 + PIXEL_STRIDE;
     m_pPixSrcA = (uint8_t*)pMemAlign->WelsMalloc (m_iStrideA << 5, "Sad_m_pPixSrcA");
@@ -192,7 +171,6 @@ class SadSatdCFuncTest : public testing::Test {
 };
 
 TEST_F (SadSatdCFuncTest, WelsSampleSad4x4_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 2); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 2); i++)
@@ -211,7 +189,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSad4x4_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSad8x8_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 3); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 3); i++)
@@ -231,7 +208,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSad8x8_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSad16x8_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 3); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 3); i++)
@@ -251,7 +227,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSad16x8_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSad8x16_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 4); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 4); i++)
@@ -271,7 +246,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSad8x16_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSad16x16_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 4); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 4); i++)
@@ -291,7 +265,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSad16x16_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSatd4x4_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 2); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 2); i++)
@@ -355,7 +328,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSatd4x4_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSadFour16x16_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 5); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 5); i++)
@@ -379,7 +351,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSadFour16x16_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSadFour16x8_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 5); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 5); i++)
@@ -404,7 +375,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSadFour16x8_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSadFour8x16_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 5); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 5); i++)
@@ -429,7 +399,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSadFour8x16_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSadFour8x8_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 4); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 4); i++)
@@ -453,7 +422,6 @@ TEST_F (SadSatdCFuncTest, WelsSampleSadFour8x8_c) {
 }
 
 TEST_F (SadSatdCFuncTest, WelsSampleSadFour4x4_c) {
-  srand ((uint32_t)time (NULL));
   for (int i = 0; i < (m_iStrideA << 3); i++)
     m_pPixSrcA[i] = rand() % 256;
   for (int i = 0; i < (m_iStrideB << 3); i++)
@@ -476,7 +444,7 @@ TEST_F (SadSatdCFuncTest, WelsSampleSadFour4x4_c) {
   EXPECT_EQ (m_pSad[0] + m_pSad[1] + m_pSad[2] + m_pSad[3], iSumSad);
 }
 
-#ifdef X86_ASM
+
 class SadSatdAssemblyFuncTest : public testing::Test {
  public:
   virtual void SetUp() {
@@ -508,347 +476,159 @@ class SadSatdAssemblyFuncTest : public testing::Test {
   CMemoryAlign* pMemAlign;
 };
 
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSad4x4_mmx) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_MMXEXT))
-    return;
-
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 2); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 2); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSad4x4_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSad4x4_mmx (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
+#define GENERATE_Sad4x4_UT(func, ref, CPUFLAGS) \
+TEST_F (SadSatdAssemblyFuncTest, func) { \
+  if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+    return; \
+  for (int i = 0; i < (m_iStrideA << 2); i++) \
+    m_pPixSrcA[i] = rand() % 256; \
+  for (int i = 0; i < (m_iStrideB << 2); i++) \
+    m_pPixSrcB[i] = rand() % 256; \
+  EXPECT_EQ (ref (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), func (m_pPixSrcA, \
+             m_iStrideA, m_pPixSrcB, m_iStrideB)); \
 }
 
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSad8x8_sse21) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 3); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 3); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSad8x8_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSad8x8_sse21 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
+#define GENERATE_Sad8x8_UT(func, ref, CPUFLAGS) \
+TEST_F (SadSatdAssemblyFuncTest, func) { \
+  if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+    return; \
+  for (int i = 0; i < (m_iStrideA << 3); i++) \
+    m_pPixSrcA[i] = rand() % 256; \
+  for (int i = 0; i < (m_iStrideB << 3); i++) \
+    m_pPixSrcB[i] = rand() % 256; \
+  EXPECT_EQ (ref (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), func (m_pPixSrcA, \
+             m_iStrideA, m_pPixSrcB, m_iStrideB)); \
 }
 
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSad8x16_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 4); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 4); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSad8x16_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSad8x16_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
+#define GENERATE_Sad8x16_UT(func, ref, CPUFLAGS) \
+TEST_F (SadSatdAssemblyFuncTest, func) { \
+  if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+    return; \
+  for (int i = 0; i < (m_iStrideA << 4); i++) \
+    m_pPixSrcA[i] = rand() % 256; \
+  for (int i = 0; i < (m_iStrideB << 4); i++) \
+    m_pPixSrcB[i] = rand() % 256; \
+  EXPECT_EQ (ref (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), func (m_pPixSrcA, \
+             m_iStrideA, m_pPixSrcB, m_iStrideB)); \
 }
 
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSad16x8_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 3); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 3); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSad16x8_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSad16x8_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
+#define GENERATE_Sad16x8_UT(func, ref, CPUFLAGS) \
+TEST_F (SadSatdAssemblyFuncTest, func) { \
+  if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+    return; \
+  for (int i = 0; i < (m_iStrideA << 3); i++) \
+    m_pPixSrcA[i] = rand() % 256; \
+  for (int i = 0; i < (m_iStrideB << 3); i++) \
+    m_pPixSrcB[i] = rand() % 256; \
+  EXPECT_EQ (ref (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), func (m_pPixSrcA, \
+             m_iStrideA, m_pPixSrcB, m_iStrideB)); \
 }
 
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSad16x16_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 4); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 4); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSad16x16_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSad16x16_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
+#define GENERATE_Sad16x16_UT(func, ref, CPUFLAGS) \
+TEST_F (SadSatdAssemblyFuncTest, func) { \
+  if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+    return; \
+  for (int i = 0; i < (m_iStrideA << 4); i++) \
+    m_pPixSrcA[i] = rand() % 256; \
+  for (int i = 0; i < (m_iStrideB << 4); i++) \
+    m_pPixSrcB[i] = rand() % 256; \
+  EXPECT_EQ (ref (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), func (m_pPixSrcA, \
+             m_iStrideA, m_pPixSrcB, m_iStrideB)); \
 }
 
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd4x4_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 2); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 2); i++)
-    m_pPixSrcB[i] = rand() % 256;
+#ifdef X86_ASM
+GENERATE_Sad4x4_UT(WelsSampleSad4x4_mmx, WelsSampleSad4x4_c, WELS_CPU_MMXEXT)
+GENERATE_Sad8x8_UT(WelsSampleSad8x8_sse21, WelsSampleSad8x8_c, WELS_CPU_SSE2)
+GENERATE_Sad8x16_UT(WelsSampleSad8x16_sse2, WelsSampleSad8x16_c, WELS_CPU_SSE2)
+GENERATE_Sad16x8_UT(WelsSampleSad16x8_sse2, WelsSampleSad16x8_c, WELS_CPU_SSE2)
+GENERATE_Sad16x16_UT(WelsSampleSad16x16_sse2, WelsSampleSad16x16_c, WELS_CPU_SSE2)
 
-  EXPECT_EQ (WelsSampleSatd4x4_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd4x4_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
+GENERATE_Sad4x4_UT(WelsSampleSatd4x4_sse2, WelsSampleSatd4x4_c, WELS_CPU_SSE2)
+GENERATE_Sad8x8_UT(WelsSampleSatd8x8_sse2, WelsSampleSatd8x8_c, WELS_CPU_SSE2)
+GENERATE_Sad8x16_UT(WelsSampleSatd8x16_sse2, WelsSampleSatd8x16_c, WELS_CPU_SSE2)
+GENERATE_Sad16x8_UT(WelsSampleSatd16x8_sse2, WelsSampleSatd16x8_c, WELS_CPU_SSE2)
+GENERATE_Sad16x16_UT(WelsSampleSatd16x16_sse2, WelsSampleSatd16x16_c, WELS_CPU_SSE2)
+
+GENERATE_Sad4x4_UT(WelsSampleSatd4x4_sse41, WelsSampleSatd4x4_c, WELS_CPU_SSE41)
+GENERATE_Sad8x8_UT(WelsSampleSatd8x8_sse41, WelsSampleSatd8x8_c, WELS_CPU_SSE41)
+GENERATE_Sad8x16_UT(WelsSampleSatd8x16_sse41, WelsSampleSatd8x16_c, WELS_CPU_SSE41)
+GENERATE_Sad16x8_UT(WelsSampleSatd16x8_sse41, WelsSampleSatd16x8_c, WELS_CPU_SSE41)
+GENERATE_Sad16x16_UT(WelsSampleSatd16x16_sse41, WelsSampleSatd16x16_c, WELS_CPU_SSE41)
+#endif
+
+#ifdef HAVE_NEON
+GENERATE_Sad4x4_UT(WelsSampleSad4x4_neon, WelsSampleSad4x4_c, WELS_CPU_NEON)
+GENERATE_Sad8x8_UT(WelsSampleSad8x8_neon, WelsSampleSad8x8_c, WELS_CPU_NEON)
+GENERATE_Sad8x16_UT(WelsSampleSad8x16_neon, WelsSampleSad8x16_c, WELS_CPU_NEON)
+GENERATE_Sad16x8_UT(WelsSampleSad16x8_neon, WelsSampleSad16x8_c, WELS_CPU_NEON)
+GENERATE_Sad16x16_UT(WelsSampleSad16x16_neon, WelsSampleSad16x16_c, WELS_CPU_NEON)
+
+GENERATE_Sad4x4_UT(WelsSampleSatd4x4_neon, WelsSampleSatd4x4_c, WELS_CPU_NEON)
+GENERATE_Sad8x8_UT(WelsSampleSatd8x8_neon, WelsSampleSatd8x8_c, WELS_CPU_NEON)
+GENERATE_Sad8x16_UT(WelsSampleSatd8x16_neon, WelsSampleSatd8x16_c, WELS_CPU_NEON)
+GENERATE_Sad16x8_UT(WelsSampleSatd16x8_neon, WelsSampleSatd16x8_c, WELS_CPU_NEON)
+GENERATE_Sad16x16_UT(WelsSampleSatd16x16_neon, WelsSampleSatd16x16_c, WELS_CPU_NEON)
+#endif
+
+#ifdef HAVE_NEON_AARCH64
+GENERATE_Sad4x4_UT(WelsSampleSad4x4_AArch64_neon, WelsSampleSad4x4_c, WELS_CPU_NEON)
+GENERATE_Sad8x8_UT(WelsSampleSad8x8_AArch64_neon, WelsSampleSad8x8_c, WELS_CPU_NEON)
+GENERATE_Sad8x16_UT(WelsSampleSad8x16_AArch64_neon, WelsSampleSad8x16_c, WELS_CPU_NEON)
+GENERATE_Sad16x8_UT(WelsSampleSad16x8_AArch64_neon, WelsSampleSad16x8_c, WELS_CPU_NEON)
+GENERATE_Sad16x16_UT(WelsSampleSad16x16_AArch64_neon, WelsSampleSad16x16_c, WELS_CPU_NEON)
+
+GENERATE_Sad4x4_UT(WelsSampleSatd4x4_AArch64_neon, WelsSampleSatd4x4_c, WELS_CPU_NEON)
+GENERATE_Sad8x8_UT(WelsSampleSatd8x8_AArch64_neon, WelsSampleSatd8x8_c, WELS_CPU_NEON)
+GENERATE_Sad8x16_UT(WelsSampleSatd8x16_AArch64_neon, WelsSampleSatd8x16_c, WELS_CPU_NEON)
+GENERATE_Sad16x8_UT(WelsSampleSatd16x8_AArch64_neon, WelsSampleSatd16x8_c, WELS_CPU_NEON)
+GENERATE_Sad16x16_UT(WelsSampleSatd16x16_AArch64_neon, WelsSampleSatd16x16_c, WELS_CPU_NEON)
+#endif
+
+#define GENERATE_SadFour_UT(func, CPUFLAGS, width, height) \
+TEST_F (SadSatdAssemblyFuncTest, func) { \
+  if (0 == (m_uiCpuFeatureFlag & CPUFLAGS)) \
+    return; \
+  for (int i = 0; i < (m_iStrideA << 5); i++) \
+    m_pPixSrcA[i] = rand() % 256; \
+  for (int i = 0; i < (m_iStrideB << 5); i++) \
+    m_pPixSrcB[i] = rand() % 256; \
+  uint8_t* pPixA = m_pPixSrcA; \
+  uint8_t* pPixB = m_pPixSrcB + m_iStrideB; \
+  int32_t iSumSad = 0; \
+  for (int i = 0; i < height; i++) { \
+    for (int j = 0; j < width; j++) { \
+      iSumSad += abs (pPixA[j] - pPixB[j - 1]); \
+      iSumSad += abs (pPixA[j] - pPixB[j + 1]); \
+      iSumSad += abs (pPixA[j] - pPixB[j - m_iStrideB]); \
+      iSumSad += abs (pPixA[j] - pPixB[j + m_iStrideB]); \
+    } \
+    pPixA += m_iStrideA; \
+    pPixB += m_iStrideB; \
+  } \
+  func (m_pPixSrcA, m_iStrideA, m_pPixSrcB + m_iStrideB, m_iStrideB, m_pSad); \
+  EXPECT_EQ (m_pSad[0] + m_pSad[1] + m_pSad[2] + m_pSad[3], iSumSad); \
 }
 
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd8x8_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 3); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 3); i++)
-    m_pPixSrcB[i] = rand() % 256;
+#ifdef X86_ASM
+GENERATE_SadFour_UT(WelsSampleSadFour4x4_sse2, WELS_CPU_SSE2, 4, 4)
+GENERATE_SadFour_UT(WelsSampleSadFour8x8_sse2, WELS_CPU_SSE2, 8, 8)
+GENERATE_SadFour_UT(WelsSampleSadFour8x16_sse2, WELS_CPU_SSE2, 8, 16)
+GENERATE_SadFour_UT(WelsSampleSadFour16x8_sse2, WELS_CPU_SSE2, 16, 8)
+GENERATE_SadFour_UT(WelsSampleSadFour16x16_sse2, WELS_CPU_SSE2, 16, 16)
+#endif
 
-  EXPECT_EQ (WelsSampleSatd8x8_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd8x8_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
+#ifdef HAVE_NEON
+GENERATE_SadFour_UT(WelsSampleSadFour4x4_neon, WELS_CPU_NEON, 4, 4)
+GENERATE_SadFour_UT(WelsSampleSadFour8x8_neon, WELS_CPU_NEON, 8, 8)
+GENERATE_SadFour_UT(WelsSampleSadFour8x16_neon, WELS_CPU_NEON, 8, 16)
+GENERATE_SadFour_UT(WelsSampleSadFour16x8_neon, WELS_CPU_NEON, 16, 8)
+GENERATE_SadFour_UT(WelsSampleSadFour16x16_neon, WELS_CPU_NEON, 16, 16)
+#endif
 
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd8x16_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 4); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 4); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd8x16_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd8x16_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd16x8_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 3); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 3); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd16x8_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd16x8_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd16x16_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 4); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 4); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd16x16_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd16x16_sse2 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd4x4_sse41) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE41))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 2); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 2); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd4x4_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd4x4_sse41 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd8x8_sse41) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE41))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 3); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 3); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd8x8_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd8x8_sse41 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd8x16_sse41) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE41))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 4); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 4); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd8x16_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd8x16_sse41 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd16x8_sse41) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE41))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 3); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 3); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd16x8_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB), WelsSampleSatd16x8_sse41 (m_pPixSrcA,
-             m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSatd16x16_sse41) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE41))
-    return;
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 4); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 4); i++)
-    m_pPixSrcB[i] = rand() % 256;
-
-  EXPECT_EQ (WelsSampleSatd16x16_c (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB),
-             WelsSampleSatd16x16_sse41 (m_pPixSrcA, m_iStrideA, m_pPixSrcB, m_iStrideB));
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSadFour16x16_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 5); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 5); i++)
-    m_pPixSrcB[i] = rand() % 256;
-  uint8_t* pPixA = m_pPixSrcA;
-  uint8_t* pPixB = m_pPixSrcB + m_iStrideB;
-
-  int32_t iSumSad = 0;
-  for (int i = 0; i < 16; i++) {
-    for (int j = 0; j < 16; j++) {
-      iSumSad += abs (pPixA[j] - pPixB[j - 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j + 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j - m_iStrideB]);
-      iSumSad += abs (pPixA[j] - pPixB[j + m_iStrideB]);
-    }
-
-    pPixA += m_iStrideA;
-    pPixB += m_iStrideB;
-  }
-
-  WelsSampleSadFour16x16_sse2 (m_pPixSrcA, m_iStrideA, m_pPixSrcB + m_iStrideB, m_iStrideB, m_pSad);
-  EXPECT_EQ (m_pSad[0] + m_pSad[1] + m_pSad[2] + m_pSad[3], iSumSad);
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSadFour16x8_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 5); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 5); i++)
-    m_pPixSrcB[i] = rand() % 256;
-  uint8_t* pPixA = m_pPixSrcA;
-  uint8_t* pPixB = m_pPixSrcB + m_iStrideB;
-
-  int32_t iSumSad = 0;
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 16; j++) {
-      iSumSad += abs (pPixA[j] - pPixB[j - 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j + 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j - m_iStrideB]);
-      iSumSad += abs (pPixA[j] - pPixB[j + m_iStrideB]);
-    }
-
-    pPixA += m_iStrideA;
-    pPixB += m_iStrideB;
-  }
-
-  WelsSampleSadFour16x8_sse2 (m_pPixSrcA, m_iStrideA, m_pPixSrcB + m_iStrideB, m_iStrideB, m_pSad);
-  EXPECT_EQ (m_pSad[0] + m_pSad[1] + m_pSad[2] + m_pSad[3], iSumSad);
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSadFour8x16_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 5); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 5); i++)
-    m_pPixSrcB[i] = rand() % 256;
-  uint8_t* pPixA = m_pPixSrcA;
-  uint8_t* pPixB = m_pPixSrcB + m_iStrideB;
-
-  int32_t iSumSad = 0;
-  for (int i = 0; i < 16; i++) {
-    for (int j = 0; j < 8; j++) {
-      iSumSad += abs (pPixA[j] - pPixB[j - 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j + 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j - m_iStrideB]);
-      iSumSad += abs (pPixA[j] - pPixB[j + m_iStrideB]);
-    }
-
-    pPixA += m_iStrideA;
-    pPixB += m_iStrideB;
-  }
-
-  WelsSampleSadFour8x16_sse2 (m_pPixSrcA, m_iStrideA, m_pPixSrcB + m_iStrideB, m_iStrideB, m_pSad);
-  EXPECT_EQ (m_pSad[0] + m_pSad[1] + m_pSad[2] + m_pSad[3], iSumSad);
-}
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSadFour8x8_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 4); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 4); i++)
-    m_pPixSrcB[i] = rand() % 256;
-  uint8_t* pPixA = m_pPixSrcA;
-  uint8_t* pPixB = m_pPixSrcB + m_iStrideB;
-
-  int32_t iSumSad = 0;
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) {
-      iSumSad += abs (pPixA[j] - pPixB[j - 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j + 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j - m_iStrideB]);
-      iSumSad += abs (pPixA[j] - pPixB[j + m_iStrideB]);
-    }
-
-    pPixA += m_iStrideA;
-    pPixB += m_iStrideB;
-  }
-
-  WelsSampleSadFour8x8_sse2 (m_pPixSrcA, m_iStrideA, m_pPixSrcB + m_iStrideB, m_iStrideB, m_pSad);
-  EXPECT_EQ (m_pSad[0] + m_pSad[1] + m_pSad[2] + m_pSad[3], iSumSad);
-}
-
-
-TEST_F (SadSatdAssemblyFuncTest, WelsSampleSadFour4x4_sse2) {
-  if (0 == (m_uiCpuFeatureFlag & WELS_CPU_SSE2))
-    return;
-
-  srand ((uint32_t)time (NULL));
-  for (int i = 0; i < (m_iStrideA << 3); i++)
-    m_pPixSrcA[i] = rand() % 256;
-  for (int i = 0; i < (m_iStrideB << 3); i++)
-    m_pPixSrcB[i] = rand() % 256;
-  uint8_t* pPixA = m_pPixSrcA;
-  uint8_t* pPixB = m_pPixSrcB + m_iStrideB;
-
-  int32_t iSumSad = 0;
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
-      iSumSad += abs (pPixA[j] - pPixB[j - 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j + 1]);
-      iSumSad += abs (pPixA[j] - pPixB[j - m_iStrideB]);
-      iSumSad += abs (pPixA[j] - pPixB[j + m_iStrideB]);
-    }
-
-    pPixA += m_iStrideA;
-    pPixB += m_iStrideB;
-  }
-
-  WelsSampleSadFour4x4_sse2 (m_pPixSrcA, m_iStrideA, m_pPixSrcB + m_iStrideB, m_iStrideB, m_pSad);
-  EXPECT_EQ (m_pSad[0] + m_pSad[1] + m_pSad[2] + m_pSad[3], iSumSad);
-}
+#ifdef HAVE_NEON_AARCH64
+GENERATE_SadFour_UT(WelsSampleSadFour4x4_AArch64_neon, WELS_CPU_NEON, 4, 4)
+GENERATE_SadFour_UT(WelsSampleSadFour8x8_AArch64_neon, WELS_CPU_NEON, 8, 8)
+GENERATE_SadFour_UT(WelsSampleSadFour8x16_AArch64_neon, WELS_CPU_NEON, 8, 16)
+GENERATE_SadFour_UT(WelsSampleSadFour16x8_AArch64_neon, WELS_CPU_NEON, 16, 8)
+GENERATE_SadFour_UT(WelsSampleSadFour16x16_AArch64_neon, WELS_CPU_NEON, 16, 16)
 #endif

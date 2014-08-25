@@ -55,7 +55,7 @@
 //#define REC_FRAME_COUNT
 
 class ISVCEncoder;
-namespace WelsSVCEnc {
+namespace WelsEnc {
 class CWelsH264SVCEncoder : public ISVCEncoder {
  public:
   CWelsH264SVCEncoder();
@@ -82,12 +82,6 @@ class CWelsH264SVCEncoder : public ISVCEncoder {
    * return: 0 - success; otherwise - failed;
    */
   virtual int EXTAPI EncodeParameterSets (SFrameBSInfo* pBsInfo);
-
-  /*
-   * return: 0 - success; otherwise - failed;
-   */
-  virtual int EXTAPI PauseFrame (const SSourcePicture* kpSrcPic, SFrameBSInfo* pBsInfo);
-
   /*
    * return: 0 - success; otherwise - failed;
    */

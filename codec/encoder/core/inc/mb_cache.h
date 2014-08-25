@@ -39,7 +39,7 @@
 #include "wels_const.h"
 #include "macros.h"
 
-namespace WelsSVCEnc {
+namespace WelsEnc {
 
 /*
  *	MB Cache information, such one cache should be defined within a slice
@@ -58,10 +58,7 @@ namespace WelsSVCEnc {
 ////////////////////////mapping scan index////////////////////////
 
 extern const uint8_t g_kuiSmb4AddrIn256[16];
-extern const uint8_t g_kuiMbCountScan4Idx[24];
-extern const uint8_t g_kuiCache30ScanIdx[16];
 extern const uint8_t g_kuiCache12_8x8RefIdx[4];
-extern const uint8_t g_kuiCache48CountScan4Idx[24];
 
 typedef	struct TagDCTCoeff {
 //ALIGNED_DECLARE( int16_t, residual_ac[16], 16 ); //I_16x16

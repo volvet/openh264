@@ -1,6 +1,6 @@
 /*!
  * \copy
- *     Copyright (c)  2008-2013, Cisco Systems
+ *     Copyright (c)  2013, Cisco Systems
  *     All rights reserved.
  *
  *     Redistribution and use in source and binary forms, with or without
@@ -28,38 +28,23 @@
  *     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *     POSSIBILITY OF SUCH DAMAGE.
  *
- *  read_config.h
- *
- *  Abstract
- *      Class for reading parameter settings in a configure file.
- *
- *  History
- *      08/18/2008 Created
- *
- *****************************************************************************/
-#ifndef READ_CONFIG_H__
-#define READ_CONFIG_H__
+ */
 
-#include <stdlib.h>
-#include <string>
-using namespace std;
+#ifdef HAVE_NEON_AARCH64
+.text
+#include "arm_arch64_common_macro.S"
 
-class CReadConfig {
- public:
-  CReadConfig (const char* kpConfigFileName);
-  virtual ~CReadConfig();
+WELS_ASM_AARCH64_FUNC_BEGIN WelsProcessingSampleSad8x8_AArch64_neon
+    ld1     {v0.8b}, [x0], x1
+    ld1     {v1.8b}, [x2], x3
+    uabdl   v2.8h, v0.8b, v1.8b
+.rept 7
+    ld1     {v0.8b}, [x0], x1
+    ld1     {v1.8b}, [x2], x3
+    uabal   v2.8h, v0.8b, v1.8b
+.endr
+    saddlv  s2, v2.8h
+    fmov    w0, s2
+WELS_ASM_AARCH64_FUNC_END
 
-  long ReadLine (string* val, const int kiValSize = 4);
-  const bool EndOfFile();
-  const int GetLines();
-  const bool ExistFile();
-  const string& GetFileName();
-
- private:
-  FILE*			m_pCfgFile;
-  string			m_strCfgFileName;
-  unsigned int	m_ulLines;
-};
-
-#endif	// READ_CONFIG_H__
-
+#endif

@@ -43,7 +43,7 @@
 #include "md.h"
 #include "mb_cache.h"
 
-namespace WelsSVCEnc {
+namespace WelsEnc {
 void WelsMdIntraInit (sWelsEncCtx* pEncCtx, SMB* pCurMb, SMbCache* pMbCache, const int32_t kiSliceFirstMbXY);
 int32_t WelsMdI16x16 (SWelsFuncPtrList* pFunc, SDqLayer* pCurDqLayer, SMbCache* pMbCache, int32_t iLambda);
 int32_t WelsMdIntraChroma (SWelsFuncPtrList* pFunc, SDqLayer* pCurDqLayer, SMbCache* pMbCache, int32_t iLambda);
@@ -76,15 +76,7 @@ void WelsMdInterMb (void* pEncCtx, void* pWelsMd, SSlice* pSlice, SMB* pCurMb, S
 //both used in BL and EL
 //void wels_md_inter_init ( SWelsMD* pMd, const uint8_t ref_idx, const bool is_highest_dlayer_flag );
 
-bool WelsMdInterJudgeBGDPskip (void* pEnc, void* pMd, SSlice* pSlice, SMB* pCurMb, SMbCache* pMbCache,
-                               bool* bKeepSkip);
-bool WelsMdInterJudgeBGDPskipFalse (void* pEnc, void* pMd, SSlice* pSlice, SMB* pCurMb, SMbCache* pMbCache,
-                                    bool* bKeepSkip);
 
-void WelsMdInterUpdateBGDInfo (SDqLayer* pCurLayer,  SMB* pCurMb, const bool kbCollocatedPredFlag,
-                               const int32_t kiRefPictureType);
-void WelsMdInterUpdateBGDInfoNULL (SDqLayer* pCurLayer,  SMB* pCurMb, const bool kbCollocatedPredFlag,
-                                   const int32_t kiRefPictureType);
 
 bool WelsMdInterJudgePskip (sWelsEncCtx* pEncCtx, SWelsMD* pWelsMd, SSlice* pSlice, SMB* pCurMb, SMbCache* pMbCache,
                             bool bTrySkip);
@@ -102,9 +94,6 @@ void WelsMdInterSecondaryModesEnc (sWelsEncCtx* pEncCtx, SWelsMD* pWelsMd, SSlic
 void WelsMdIntraSecondaryModesEnc (sWelsEncCtx* pEncCtx, SWelsMD* pWelsMd, SMB* pCurMb, SMbCache* pMbCache);
 //end of: both used in BL and EL
 
-//typedef void (*MD_INTRA_MB_BASE) (sWelsEncCtx* pEncCtx, SWelsMD* pWelsMd, SMB* pCurMb);
-
-void WelsInitSCDPskipFunc (SWelsFuncPtrList* pFuncList, const bool bScrollingDetection);
 
 }
 #endif//WELS_MACROBLOCK_MODE_DECISION_H__

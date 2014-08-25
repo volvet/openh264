@@ -41,7 +41,7 @@
 namespace WelsDec {
 //Init
 void InitErrorCon (PWelsDecoderContext pCtx) {
-  if (pCtx->iErrorConMethod == ERROR_CON_SLICE_COPY) {
+  if (pCtx->eErrorConMethod == ERROR_CON_SLICE_COPY) {
     pCtx->sCopyFunc.pCopyLumaFunc = WelsCopy16x16_c;
     pCtx->sCopyFunc.pCopyChromaFunc = WelsCopy8x8_c;
 
@@ -57,9 +57,17 @@ void InitErrorCon (PWelsDecoderContext pCtx) {
 
 #if defined(HAVE_NEON)
     if (pCtx->uiCpuFlag & WELS_CPU_NEON) {
+      pCtx->sCopyFunc.pCopyLumaFunc		= WelsCopy16x16_neon; //aligned
       pCtx->sCopyFunc.pCopyChromaFunc		= WelsCopy8x8_neon; //aligned
     }
 #endif //HAVE_NEON
+
+#if defined(HAVE_NEON_AARCH64)
+    if (pCtx->uiCpuFlag & WELS_CPU_NEON) {
+      pCtx->sCopyFunc.pCopyLumaFunc		= WelsCopy16x16_AArch64_neon; //aligned
+      pCtx->sCopyFunc.pCopyChromaFunc		= WelsCopy8x8_AArch64_neon; //aligned
+    }
+#endif //HAVE_NEON_AARCH64
   } //TODO add more methods here
   return;
 }
@@ -72,9 +80,9 @@ void DoErrorConFrameCopy (PWelsDecoderContext pCtx) {
   int32_t iStrideY = pDstPic->iLinesize[0];
   int32_t iStrideUV = pDstPic->iLinesize[1];
   if (pSrcPic == NULL) { //no ref pic, assign specific data to picture
-    memset (pDstPic->pData[0], 0, uiHeightInPixelY * iStrideY);
-    memset (pDstPic->pData[1], 0, (uiHeightInPixelY >> 1) * iStrideUV);
-    memset (pDstPic->pData[2], 0, (uiHeightInPixelY >> 1) * iStrideUV);
+    memset (pDstPic->pData[0], 128, uiHeightInPixelY * iStrideY);
+    memset (pDstPic->pData[1], 128, (uiHeightInPixelY >> 1) * iStrideUV);
+    memset (pDstPic->pData[2], 128, (uiHeightInPixelY >> 1) * iStrideUV);
   } else { //has ref pic here
     memcpy (pDstPic->pData[0], pSrcPic->pData[0], uiHeightInPixelY * iStrideY);
     memcpy (pDstPic->pData[1], pSrcPic->pData[1], (uiHeightInPixelY >> 1) * iStrideUV);
@@ -120,19 +128,19 @@ void DoErrorConSliceCopy (PWelsDecoderContext pCtx) {
           //Y component
           pDstData = pDstPic->pData[0] + iMbY * 16 * iDstStride + iMbX * 16;
           for (int32_t i = 0; i < 16; ++i) {
-            memset (pDstData, 0, 16);
+            memset (pDstData, 128, 16);
             pDstData += iDstStride;
           }
           //U component
           pDstData = pDstPic->pData[1] + iMbY * 8 * iDstStride / 2 + iMbX * 8;
           for (int32_t i = 0; i < 8; ++i) {
-            memset (pDstData, 0, 8);
+            memset (pDstData, 128, 8);
             pDstData += iDstStride / 2;
           }
           //V component
           pDstData = pDstPic->pData[2] + iMbY * 8 * iDstStride / 2 + iMbX * 8;
           for (int32_t i = 0; i < 8; ++i) {
-            memset (pDstData, 0, 8);
+            memset (pDstData, 128, 8);
             pDstData += iDstStride / 2;
           }
         } //
@@ -172,14 +180,16 @@ bool NeedErrorCon (PWelsDecoderContext pCtx) {
 // ImplementErrorConceal
 // Do actual error concealment
 void ImplementErrorCon (PWelsDecoderContext pCtx) {
-  if (ERROR_CON_DISABLE == pCtx->iErrorConMethod) {
+  if (ERROR_CON_DISABLE == pCtx->eErrorConMethod) {
     pCtx->iErrorCode |= dsBitstreamError;
     return;
-  } else if (ERROR_CON_FRAME_COPY == pCtx->iErrorConMethod) {
+  } else if (ERROR_CON_FRAME_COPY == pCtx->eErrorConMethod) {
     DoErrorConFrameCopy (pCtx);
-  } else if (ERROR_CON_SLICE_COPY == pCtx->iErrorConMethod) {
+  } else if (ERROR_CON_SLICE_COPY == pCtx->eErrorConMethod) {
     DoErrorConSliceCopy (pCtx);
   } //TODO add other EC methods here in the future
+  pCtx->iErrorCode |= dsDataErrorConcealed;
+  pCtx->bDecErrorConedFlag = true;
 }
 
 } // namespace WelsDec

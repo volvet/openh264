@@ -1,9 +1,7 @@
-#include <time.h>
-
 #include "gtest/gtest.h"
 #include "memory_align.h"
 
-using namespace WelsSVCEnc;
+using namespace WelsEnc;
 
 //Tests of WelsGetCacheLineSize Begin
 TEST (MemoryAlignTest, GetCacheLineSize_LoopWithin16K) {
@@ -30,7 +28,6 @@ TEST (MemoryAlignTest, GetCacheLineSize_MaxUINT) {
 //Tests of WelsMallocAndFree Begin
 TEST (MemoryAlignTest, WelsMallocAndFreeOnceFunctionVerify) {
   const uint32_t kuiTargetAlignSize[4] = {32, 16, 64, 8};
-  srand ((uint32_t)time (NULL));
   const uint32_t kuiZero = 0;
   for (int i = 0; i < 4; i++) {
     const uint32_t kuiTestAlignSize	= kuiTargetAlignSize[i];

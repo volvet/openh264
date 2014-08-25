@@ -36,7 +36,7 @@
 #include "utils.h"
 #include "encoder.h"
 
-namespace WelsSVCEnc {
+namespace WelsEnc {
 
 #define WelsSafeDelete(p) if(p){ delete (p); (p) = NULL; }
 
@@ -982,7 +982,7 @@ ESceneChangeIdc CWelsPreProcess::DetectSceneChangeScreen (sWelsEncCtx* pCtx, SPi
   SPicture* pRefPic = NULL;
   SRefInfoParam* pRefPicInfo = NULL;
   uint8_t*  pCurBlockStaticPointer = NULL;
-  SLogContext* pLogCtx = &(pCtx->sLogCtx);
+  SLogContext* pLogCtx = & (pCtx->sLogCtx);
   const int32_t iNegligibleMotionBlocks = (static_cast<int32_t> ((pCurPicture->iWidthInPixel >> 3) *
                                           (pCurPicture->iHeightInPixel >> 3) * STATIC_SCENE_MOTION_RATIO));
   const uint8_t iCurTid = GetTemporalLevel (&pSvcParam->sDependencyLayers[m_pEncCtx->sSpatialIndexMap[0].iDid],
@@ -1190,8 +1190,6 @@ void  CWelsPreProcess::WelsMoveMemoryWrapper (SWelsSvcCodingParam* pSvcParam, SP
   const int32_t kiDstStrideY = pDstPic->iLineSize[0];
   const int32_t kiDstStrideUV = pDstPic->iLineSize[1];
 
-#define MAX_WIDTH      (4096)
-#define MAX_HEIGHT     (2304)//MAX_FS_LEVEL51 (36864); MAX_FS_LEVEL51*256/4096 = 2304
   if (pSrcY) {
     if (iSrcWidth <= 0 || iSrcWidth > MAX_WIDTH || iSrcHeight <= 0 || iSrcHeight > MAX_HEIGHT)
       return;
@@ -1221,4 +1219,4 @@ void  CWelsPreProcess::WelsMoveMemoryWrapper (SWelsSvcCodingParam* pSvcParam, SP
 }
 
 //*********************************************************************************************************/
-} // namespace WelsSVCEnc
+} // namespace WelsEnc

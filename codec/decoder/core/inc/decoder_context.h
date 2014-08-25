@@ -111,7 +111,7 @@ struct TagDeblockingFunc;
 typedef struct tagDeblockingFilter {
 uint8_t*	pCsData[3];	// pointer to reconstructed picture data
 int32_t	iCsStride[2];	// Cs stride
-ESliceType  eSliceType;
+EWelsSliceType  eSliceType;
 int8_t	iSliceAlphaC0Offset;
 int8_t	iSliceBetaOffset;
 int8_t  iChromaQP;
@@ -168,15 +168,14 @@ SLogContext sLogCtx;
 // Input
 void*				pArgDec;			// structured arguments for decoder, reserved here for extension in the future
 
-SDataBuffer       	sRawData;
+SDataBuffer                     sRawData;
 
 // Configuration
-SDecodingParam*    	pParam;
+SDecodingParam*                 pParam;
 uint32_t			uiCpuFlag;			// CPU compatibility detected
 
-int32_t				iOutputColorFormat;		// color space format to be outputed
+EVideoFormatType eOutputColorFormat;		// color space format to be outputed
 VIDEO_BITSTREAM_TYPE eVideoType; //indicate the type of video to decide whether or not to do qp_delta error detection.
-bool				bErrorResilienceFlag;		// error resilience flag
 bool				bHaveGotMemory;	// global memory for decoder context related ever requested?
 
 int32_t				iImgWidthInPixel;	// width of image in pixel reconstruction picture to be output
@@ -184,7 +183,7 @@ int32_t				iImgHeightInPixel;// height of image in pixel reconstruction picture 
 
 // Derived common elements
 SNalUnitHeader		sCurNalHead;
-ESliceType			eSliceType;			// Slice type
+EWelsSliceType			eSliceType;			// Slice type
 int32_t				iFrameNum;
 int32_t				iPrevFrameNum;		// frame number of previous frame well decoded for non-truncated mode yet
 bool              bLastHasMmco5;      //
@@ -287,7 +286,7 @@ uint16_t            uiCurIdrPicId;
 bool       bNewSeqBegin;
 bool       bNextNewSeqBegin;
 int        iOverwriteFlags;
-int32_t iErrorConMethod; //
+ERROR_CON_IDC eErrorConMethod; //
 PPicture pPreviousDecodedPictureInDpb; //pointer to previously decoded picture in DPB for error concealment
 PGetIntraPredFunc pGetI16x16LumaPredFunc[7];		//h264_predict_copy_16x16;
 PGetIntraPredFunc pGetI4x4LumaPredFunc[14];		// h264_predict_4x4_t
@@ -317,7 +316,10 @@ int32_t iFeedbackVclNalInAu;
 int32_t iFeedbackTidInAu;
 
 bool bAuReadyFlag;   // true: one au is ready for decoding; false: default value
+bool bDecErrorConedFlag; //true: current decoder is error coned
 
+bool bPrintFrameErrorTraceFlag; //true: can print info for upper layer
+int32_t iIgnoredErrorInfoPacketCount; //store the packet number with error decoding info
 //trace handle
 void*      pTraceHandle;
 

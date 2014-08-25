@@ -58,7 +58,7 @@
 #include "mt_defs.h"	// for multiple threadin,
 #include "WelsThreadLib.h"
 
-namespace WelsSVCEnc {
+namespace WelsEnc {
 
 /*
  *	reference list for each quality layer in SVC
@@ -119,7 +119,9 @@ SWelsSliceBs*		 	pSliceBs;		// bitstream buffering for various slices, [uiSliceI
 int32_t*					pSadCostMb;
 /* MVD cost tables for Inter MB */
 int32_t              iMvRange;
-uint16_t*					pMvdCostTableInter; //[52];	// adaptive to spatial layers
+uint16_t*					pMvdCostTable; //[52];	// adaptive to spatial layers
+int32_t					  iMvdCostTableSize; //the size of above table
+int32_t					    iMvdCostTableStride; //the stride of above table
 SMVUnitXY*
 pMvUnitBlock4x4;	// (*pMvUnitBlock4x4[2])[MB_BLOCK4x4_NUM];	    // for store each 4x4 blocks' mv unit, the two swap after different d layer
 int8_t*
@@ -217,6 +219,11 @@ SStatSliceInfo				sPerInfo;
 int32_t iEncoderError;
 WELS_MUTEX					mutexEncoderError;
 int32_t iDropNumber;
+
+#ifdef ENABLE_FRAME_DUMP
+bool bDependencyRecFlag[MAX_DEPENDENCY_LAYER];
+bool bRecFlag;
+#endif
 } sWelsEncCtx/*, *PWelsEncCtx*/;
 }
 #endif//sWelsEncCtx_H__

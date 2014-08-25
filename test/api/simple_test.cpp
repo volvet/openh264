@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
-#if defined (ANDROID_NDK)
+#include <stdlib.h>
+#include <time.h>
 #include <stdio.h>
-#endif
+#include <string.h>
 
 
 #if (defined(ANDROID_NDK)||defined(APPLE_IOS))
@@ -16,6 +17,11 @@ int main (int argc, char** argv) {
   ::testing::GTEST_FLAG (output) = xmlPath;
 #endif
   ::testing::InitGoogleTest (&argc, argv);
+  unsigned int seed = (unsigned int) time (NULL);
+  if (argc >= 2 && !strncmp (argv[1], "--seed=", 7))
+    seed = atoi (argv[1] + 7);
+  printf ("Random seed: %u\n", seed);
+  srand (seed);
 
   return RUN_ALL_TESTS();
 }
